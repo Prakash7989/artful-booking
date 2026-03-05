@@ -4,6 +4,8 @@ import { Menu, X, Search, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
+import { useAuth } from "@/hooks/useAuth";
+
 const navLinks = [
   { href: "/", label: "Home" },
   { href: "/about", label: "About" },
@@ -14,6 +16,7 @@ const navLinks = [
 const Header = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const location = useLocation();
+  const { isAuthenticated, logout, user } = useAuth();
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -51,13 +54,28 @@ const Header = () => {
           <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-primary">
             <Search className="h-5 w-5" />
           </Button>
-          <Button variant="outline" className="border-primary/20 hover:border-primary hover:bg-primary/5">
-            <User className="mr-2 h-4 w-4" />
-            Login
-          </Button>
-          <Button className="bg-gradient-saffron hover:opacity-90">
-            Book Artist
-          </Button>
+          {!isAuthenticated ? (
+            <>
+              <Button variant="ghost" asChild className="hidden text-muted-foreground hover:text-primary lg:inline-flex">
+                <Link to="/login">Login</Link>
+              </Button>
+              <Button asChild className="bg-gradient-saffron hover:opacity-90">
+                <Link to="/register">Sign Up</Link>
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button variant="ghost" asChild className="text-muted-foreground hover:text-primary">
+                <Link to={user?.role === 'artist' ? `/artists/${user._id}` : '/profile'}>
+                  <User className="mr-2 h-4 w-4" />
+                  Profile
+                </Link>
+              </Button>
+              <Button variant="outline" onClick={logout} className="border-primary/20 hover:border-primary hover:bg-primary/5">
+                Logout
+              </Button>
+            </>
+          )}
         </div>
 
         {/* Mobile Menu Button */}
@@ -91,13 +109,31 @@ const Header = () => {
               </Link>
             ))}
             <div className="mt-4 flex flex-col gap-3 border-t border-border pt-4">
-              <Button variant="outline" className="w-full justify-center">
-                <User className="mr-2 h-4 w-4" />
-                Login
-              </Button>
-              <Button className="w-full bg-gradient-saffron">
-                Book Artist
-              </Button>
+              {!isAuthenticated ? (
+                <>
+                  <Button variant="outline" asChild className="w-full justify-center">
+                    <Link to="/login">
+                      <User className="mr-2 h-4 w-4" />
+                      Login
+                    </Link>
+                  </Button>
+                  <Button asChild className="w-full bg-gradient-saffron">
+                    <Link to="/register">Sign Up</Link>
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button variant="outline" asChild className="w-full justify-center">
+                    <Link to={user?.role === 'artist' ? `/artists/${user._id}` : '/profile'}>
+                      <User className="mr-2 h-4 w-4" />
+                      Profile
+                    </Link>
+                  </Button>
+                  <Button variant="secondary" onClick={logout} className="w-full justify-center">
+                    Logout
+                  </Button>
+                </>
+              )}
             </div>
           </nav>
         </div>
