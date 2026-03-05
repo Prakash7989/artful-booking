@@ -19,7 +19,10 @@ export default function Register() {
         bio: '',
         state: '',
         specialty: '',
+        awards: '',
     });
+    const [profileImage, setProfileImage] = useState<File | null>(null);
+    const [imagePreview, setImagePreview] = useState<string>('');
     const [isLoading, setIsLoading] = useState(false);
     const { login } = useAuth();
     const navigate = useNavigate();
@@ -29,24 +32,52 @@ export default function Register() {
         setFormData((prev) => ({ ...prev, [e.target.id]: e.target.value }));
     };
 
+    const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files[0]) {
+            const file = e.target.files[0];
+            setProfileImage(file);
+            setImagePreview(URL.createObjectURL(file));
+        }
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsLoading(true);
 
         try {
-            const payload = { ...formData };
-            if (payload.role !== 'artist') {
-                payload.bio = '';
-                payload.state = '';
-                payload.specialty = '';
+            let bodyData;
+            let headersData: HeadersInit = {};
+
+            if (formData.role === 'artist' && profileImage) {
+                const submitData = new FormData();
+                submitData.append('name', formData.name);
+                submitData.append('email', formData.email);
+                submitData.append('password', formData.password);
+                submitData.append('role', formData.role);
+                submitData.append('bio', formData.bio);
+                submitData.append('state', formData.state);
+                submitData.append('specialty', formData.specialty);
+                submitData.append('awards', formData.awards);
+                submitData.append('profileImage', profileImage);
+                bodyData = submitData;
+                // Don't set Content-Type header when sending FormData, browser will set it with the boundary
+            } else {
+                const payload = { ...formData };
+                if (payload.role !== 'artist') {
+                    payload.bio = '';
+                    payload.state = '';
+                    payload.specialty = '';
+                    payload.awards = '';
+                }
+                bodyData = JSON.stringify(payload);
+                headersData['Content-Type'] = 'application/json';
             }
+
 
             const response = await fetch('/api/auth/register', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(payload),
+                headers: headersData,
+                body: bodyData,
             });
 
             const data = await response.json();
@@ -55,12 +86,21 @@ export default function Register() {
                 throw new Error(data.message || 'Registration failed');
             }
 
-            login(data as User);
-            toast({
-                title: 'Success',
-                description: 'Account created successfully',
-            });
-            navigate('/');
+            if (data.pendingApproval) {
+                toast({
+                    title: 'Registration Submitted',
+                    description: data.message,
+                });
+                navigate('/login');
+            } else {
+                login(data as User);
+                toast({
+                    title: 'Success',
+                    description: 'Account created successfully',
+                });
+                navigate('/');
+            }
+
         } catch (error: any) {
             toast({
                 variant: 'destructive',
@@ -111,6 +151,18 @@ export default function Register() {
                             {formData.role === 'artist' && (
                                 <div className="space-y-4 mt-4 p-4 border rounded-md bg-muted/50">
                                     <h3 className="font-semibold text-sm">Artist Details</h3>
+
+                                    <div className="space-y-2">
+                                        <Label htmlFor="profileImage">Profile Image</Label>
+                                        <Input id="profileImage" type="file" accept="image/*" onChange={handleImageChange} required />
+                                        {imagePreview && (
+                                            <div className="mt-2">
+                                                <p className="text-sm text-muted-foreground mb-1">Preview:</p>
+                                                <img src={imagePreview} alt="Profile Preview" className="h-24 w-24 object-cover rounded-md border" />
+                                            </div>
+                                        )}
+                                    </div>
+
                                     <div className="space-y-2">
                                         <Label htmlFor="bio">Bio</Label>
                                         <Input id="bio" value={formData.bio} onChange={handleChange} required />
@@ -122,6 +174,10 @@ export default function Register() {
                                     <div className="space-y-2">
                                         <Label htmlFor="specialty">Specialty</Label>
                                         <Input id="specialty" value={formData.specialty} onChange={handleChange} required placeholder="e.g. Fine Art, Sculpture" />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="awards">Awards (Optional)</Label>
+                                        <Input id="awards" value={formData.awards} onChange={handleChange} placeholder="e.g. National Art Prize 2023" />
                                     </div>
                                 </div>
                             )}

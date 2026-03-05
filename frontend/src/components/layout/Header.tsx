@@ -66,7 +66,7 @@ const Header = () => {
           ) : (
             <>
               <Button variant="ghost" asChild className="text-muted-foreground hover:text-primary">
-                <Link to={user?.role === 'artist' ? `/artists/${user._id}` : '/profile'}>
+                <Link to="/profile">
                   <User className="mr-2 h-4 w-4" />
                   Profile
                 </Link>
@@ -124,7 +124,7 @@ const Header = () => {
               ) : (
                 <>
                   <Button variant="outline" asChild className="w-full justify-center">
-                    <Link to={user?.role === 'artist' ? `/artists/${user._id}` : '/profile'}>
+                    <Link to="/profile">
                       <User className="mr-2 h-4 w-4" />
                       Profile
                     </Link>
