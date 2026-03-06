@@ -2,10 +2,10 @@ const User = require('../models/User');
 const jwt = require('jsonwebtoken');
 const cloudinary = require('../config/cloudinary');
 
-// Generate JWT
-const generateToken = (id) => {
-  return jwt.sign({ id }, process.env.JWT_SECRET, {
-    expiresIn: '30d',
+// Generate JWT — role is embedded so each role's token is structurally distinct
+const generateToken = (id, role) => {
+  return jwt.sign({ id, role }, process.env.JWT_SECRET, {
+    expiresIn: role === 'admin' ? '8h' : '30d', // Admins get shorter-lived tokens
   });
 };
 
@@ -73,7 +73,7 @@ const registerUser = async (req, res) => {
             email: user.email,
             role: user.role,
             profileImage: user.profileImage,
-            token: generateToken(user._id),
+            token: generateToken(user._id, user.role),
          });
       }
     } else {
@@ -84,32 +84,73 @@ const registerUser = async (req, res) => {
   }
 };
 
-// @desc    Authenticate a user
+// @desc    Authenticate a user (customer / artist only — admins must use /api/auth/admin-login)
 // @route   POST /api/auth/login
 // @access  Public
 const loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // Check for user email
     const user = await User.findOne({ email }).select('+password');
 
-    if (user && (await user.matchPassword(password))) {
-      if (user.role === 'artist' && !user.isApproved) {
-        return res.status(401).json({ message: 'Your artist account is pending admin approval' });
-      }
-
-      res.json({
-        _id: user.id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        profileImage: user.profileImage,
-        token: generateToken(user._id),
-      });
-    } else {
-      res.status(401).json({ message: 'Invalid email or password' });
+    if (!user || !(await user.matchPassword(password))) {
+      return res.status(401).json({ message: 'Invalid email or password' });
     }
+
+    // Admins must log in via the dedicated admin endpoint
+    if (user.role === 'admin') {
+      return res.status(403).json({
+        message: 'Admin accounts must sign in at /admin/login',
+        redirectTo: '/admin/login',
+      });
+    }
+
+    // Artists must be approved before they can log in
+    if (user.role === 'artist' && !user.isApproved) {
+      return res.status(401).json({ message: 'Your artist account is pending admin approval' });
+    }
+
+    res.json({
+      _id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      profileImage: user.profileImage,
+      token: generateToken(user._id, user.role),
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Authenticate an admin (admin only)
+// @route   POST /api/auth/admin-login
+// @access  Public
+const adminLogin = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    const user = await User.findOne({ email }).select('+password');
+
+    if (!user || !(await user.matchPassword(password))) {
+      return res.status(401).json({ message: 'Invalid email or password' });
+    }
+
+    if (user.role !== 'admin') {
+      return res.status(403).json({
+        message: 'Access denied. This login is for administrators only.',
+        redirectTo: '/login',
+      });
+    }
+
+    res.json({
+      _id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      profileImage: user.profileImage,
+      token: generateToken(user._id, user.role),
+    });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -161,7 +202,7 @@ const updateUserProfile = async (req, res) => {
         bio: updatedUser.bio,
         state: updatedUser.state,
         specialty: updatedUser.specialty,
-        token: req.headers.authorization.split(' ')[1], // Preserve existing token
+        token: req.headers.authorization.split(' ')[1], // Preserve existing token (role unchanged)
       });
     } else {
       res.status(404).json({ message: 'User not found' });
@@ -174,6 +215,7 @@ const updateUserProfile = async (req, res) => {
 module.exports = {
   registerUser,
   loginUser,
+  adminLogin,
   getMe,
   updateUserProfile,
 };

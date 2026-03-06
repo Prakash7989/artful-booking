@@ -1,4 +1,6 @@
-import React, { createContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useState, useEffect, ReactNode, useContext } from 'react';
+
+export const useAuth = () => useContext(AuthContext);
 
 export interface User {
     _id: string;
@@ -9,6 +11,7 @@ export interface User {
     bio?: string;
     state?: string;
     specialty?: string;
+    available?: boolean;
     token?: string;
 }
 

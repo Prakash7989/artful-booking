@@ -35,18 +35,76 @@ const userSchema = new mongoose.Schema({
     type: String
   },
   state: {
+    type: String // We will match this with State model's id/name
+  },
+  artForm: {
     type: String
   },
   specialty: {
     type: String
   },
+  experience: {
+    type: String
+  },
+  price: {
+    type: Number,
+    default: 0
+  },
+  rating: {
+    type: Number,
+    default: 4.5
+  },
+  reviewsCount: {
+    type: Number,
+    default: 0
+  },
   awards: {
     type: String
   },
-  isApproved: {
+  available: {
     type: Boolean,
     default: true
-  }
+  },
+  isApproved: {
+    type: Boolean,
+    default: false // Artists should be false by default until admin approves
+  },
+  // Additional fields for Artist Profile
+  story: {
+    type: String
+  },
+  gallery: [{
+    url: String,
+    type: { type: String, enum: ['image', 'video'], default: 'image' },
+    title: String
+  }],
+  pastPerformances: [{
+    event: String,
+    venue: String,
+    date: String
+  }],
+  pricing: {
+    packages: [{
+      name: String,
+      duration: String,
+      description: String,
+      price: Number
+    }],
+    addOns: [{
+      name: String,
+      price: Number
+    }]
+  },
+  availability: {
+    bookedDates: [String],
+    blockedDates: [String]
+  },
+  customerReviews: [{
+    user: String,
+    rating: Number,
+    comment: String,
+    date: String
+  }]
 }, {
   timestamps: true
 });

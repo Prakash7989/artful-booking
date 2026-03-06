@@ -4,7 +4,10 @@ const cors = require('cors');
 const connectDB = require('./config/db');
 
 // Connect to database
-connectDB();
+connectDB().then(() => {
+  const seedData = require('./utils/seedData');
+  seedData();
+});
 
 const app = express();
 
@@ -15,6 +18,10 @@ app.use(express.urlencoded({ extended: false }));
 
 // Routes
 app.use('/api/auth', require('./routes/authRoutes'));
+app.use('/api/admin', require('./routes/adminRoutes'));
+app.use('/api/states', require('./routes/stateRoutes'));
+app.use('/api/artists', require('./routes/artistRoutes'));
+app.use('/api/bookings', require('./routes/bookingRoutes'));
 
 // Error handler middleware
 app.use((err, req, res, next) => {

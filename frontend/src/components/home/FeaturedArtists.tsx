@@ -1,5 +1,6 @@
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Star, MapPin, Calendar, ChevronLeft, ChevronRight } from "lucide-react";
+import { Star, MapPin, Calendar, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router-dom";
@@ -11,75 +12,29 @@ import {
   CarouselPrevious,
 } from "@/components/ui/carousel";
 
-// Mock data for featured artists
-const featuredArtists = [
-  {
-    id: "1",
-    name: "Lakshmi Devi",
-    artForm: "Bharatanatyam",
-    state: "Tamil Nadu",
-    rating: 4.9,
-    reviews: 127,
-    price: 15000,
-    experience: "25 years",
-    image: "👩‍🎨",
-    available: true,
-  },
-  {
-    id: "2",
-    name: "Rajendra Singh",
-    artForm: "Rajasthani Folk",
-    state: "Rajasthan",
-    rating: 4.8,
-    reviews: 89,
-    price: 12000,
-    experience: "18 years",
-    image: "👨‍🎨",
-    available: true,
-  },
-  {
-    id: "3",
-    name: "Krishnan Nair",
-    artForm: "Kathakali",
-    state: "Kerala",
-    rating: 5.0,
-    reviews: 156,
-    price: 20000,
-    experience: "30 years",
-    image: "🎭",
-    available: false,
-  },
-  {
-    id: "4",
-    name: "Meera Sharma",
-    artForm: "Kathak",
-    state: "Uttar Pradesh",
-    rating: 4.7,
-    reviews: 94,
-    price: 18000,
-    experience: "22 years",
-    image: "💃",
-    available: true,
-  },
-  {
-    id: "5",
-    name: "Baul Sangeet Group",
-    artForm: "Baul Music",
-    state: "West Bengal",
-    rating: 4.9,
-    reviews: 112,
-    price: 25000,
-    experience: "20 years",
-    image: "🎵",
-    available: true,
-  },
-];
-
 const FeaturedArtists = () => {
+  const [artists, setArtists] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchArtists = async () => {
+      try {
+        const response = await fetch('/api/artists?limit=10');
+        const data = await response.json();
+        setArtists(data);
+      } catch (error) {
+        console.error("Error fetching featured artists:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchArtists();
+  }, []);
+
   return (
     <section className="bg-muted/50 py-16 md:py-24">
       <div className="container">
-        {/* Section Header */}
+        {/* Section Header ... (keep existing) ... */}
         <div className="mb-12 flex flex-col items-center justify-between gap-4 md:flex-row">
           <div>
             <motion.span
@@ -106,85 +61,95 @@ const FeaturedArtists = () => {
         </div>
 
         {/* Artists Carousel */}
-        <Carousel
-          opts={{
-            align: "start",
-            loop: true,
-          }}
-          className="w-full"
-        >
-          <CarouselContent className="-ml-4">
-            {featuredArtists.map((artist) => (
-              <CarouselItem key={artist.id} className="pl-4 sm:basis-1/2 lg:basis-1/3 xl:basis-1/4">
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                >
-                  <Link
-                    to={`/artists/${artist.id}`}
-                    className="group block overflow-hidden rounded-xl border border-border bg-card transition-all hover:border-primary/30 hover:shadow-warm"
+        {isLoading ? (
+          <div className="flex h-64 items-center justify-center">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          </div>
+        ) : (
+          <Carousel
+            opts={{
+              align: "start",
+              loop: true,
+            }}
+            className="w-full"
+          >
+            <CarouselContent className="-ml-4">
+              {artists.map((artist) => (
+                <CarouselItem key={artist._id} className="pl-4 sm:basis-1/2 lg:basis-1/3 xl:basis-1/4">
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
                   >
-                    {/* Artist Image */}
-                    <div className="relative aspect-[4/3] bg-gradient-to-br from-primary/10 to-accent/10">
-                      <div className="absolute inset-0 flex items-center justify-center text-6xl">
-                        {artist.image}
-                      </div>
-                      {/* Availability Badge */}
-                      <div className="absolute right-3 top-3">
-                        <Badge
-                          variant={artist.available ? "default" : "secondary"}
-                          className={artist.available ? "bg-green-500 hover:bg-green-600" : ""}
-                        >
-                          {artist.available ? "Available" : "Booked"}
-                        </Badge>
-                      </div>
-                    </div>
-
-                    {/* Artist Info */}
-                    <div className="p-4">
-                      <div className="mb-2 flex items-start justify-between">
-                        <div>
-                          <h3 className="font-display text-lg font-semibold text-foreground group-hover:text-primary">
-                            {artist.name}
-                          </h3>
-                          <p className="text-sm text-primary">{artist.artForm}</p>
+                    <Link
+                      to={`/artists/${artist._id}`}
+                      className="group block overflow-hidden rounded-xl border border-border bg-card transition-all hover:border-primary/30 hover:shadow-warm"
+                    >
+                      {/* Artist Image */}
+                      <div className="relative aspect-[4/3] bg-gradient-to-br from-primary/10 to-accent/10">
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <img
+                            src={artist.profileImage || "https://icon-library.com/images/anonymous-avatar-icon/anonymous-avatar-icon-25.jpg"}
+                            className="h-full w-full object-cover"
+                            alt={artist.name}
+                          />
                         </div>
-                        <div className="flex items-center gap-1 text-sm">
-                          <Star className="h-4 w-4 fill-accent text-accent" />
-                          <span className="font-medium">{artist.rating}</span>
-                          <span className="text-muted-foreground">({artist.reviews})</span>
+                        {/* Availability Badge */}
+                        <div className="absolute right-3 top-3">
+                          <Badge
+                            variant={artist.available ? "default" : "secondary"}
+                            className={artist.available ? "bg-green-500 hover:bg-green-600" : ""}
+                          >
+                            {artist.available ? "Available" : "Booked"}
+                          </Badge>
                         </div>
                       </div>
 
-                      <div className="mb-3 flex items-center gap-2 text-sm text-muted-foreground">
-                        <MapPin className="h-3.5 w-3.5" />
-                        <span>{artist.state}</span>
-                        <span className="text-border">•</span>
-                        <Calendar className="h-3.5 w-3.5" />
-                        <span>{artist.experience}</span>
-                      </div>
-
-                      <div className="flex items-center justify-between border-t border-border pt-3">
-                        <div>
-                          <span className="text-xs text-muted-foreground">Starting from</span>
-                          <p className="font-semibold text-foreground">
-                            ₹{artist.price.toLocaleString("en-IN")}
-                          </p>
+                      {/* Artist Info */}
+                      <div className="p-4">
+                        <div className="mb-2 flex items-start justify-between">
+                          <div>
+                            <h3 className="font-display text-lg font-semibold text-foreground group-hover:text-primary">
+                              {artist.name}
+                            </h3>
+                            <p className="text-sm text-primary">{artist.artForm || artist.specialty}</p>
+                          </div>
+                          <div className="flex items-center gap-1 text-sm">
+                            <Star className="h-4 w-4 fill-accent text-accent" />
+                            <span className="font-medium">{artist.rating || 4.5}</span>
+                            <span className="text-muted-foreground">({artist.reviewsCount || 0})</span>
+                          </div>
                         </div>
-                        <Button size="sm" className="bg-gradient-saffron hover:opacity-90">
-                          Book Now
-                        </Button>
+
+                        <div className="mb-3 flex items-center gap-2 text-sm text-muted-foreground">
+                          <MapPin className="h-3.5 w-3.5" />
+                          <span>{artist.state}</span>
+                          <span className="text-border">•</span>
+                          <Calendar className="h-3.5 w-3.5" />
+                          <span>{artist.experience || '20+ years'}</span>
+                        </div>
+
+                        <div className="flex items-center justify-between border-t border-border pt-3">
+                          <div>
+                            <span className="text-xs text-muted-foreground">Starting from</span>
+                            <p className="font-semibold text-foreground">
+                              ₹{(artist.price || 0).toLocaleString("en-IN")}
+                            </p>
+                          </div>
+                          <Button size="sm" className="bg-gradient-saffron hover:opacity-90">
+                            Book Now
+                          </Button>
+                        </div>
                       </div>
-                    </div>
-                  </Link>
-                </motion.div>
-              </CarouselItem>
-            ))}
-          </CarouselContent>
-          <CarouselPrevious className="left-0 border-primary/30 bg-background hover:bg-primary/10" />
-          <CarouselNext className="right-0 border-primary/30 bg-background hover:bg-primary/10" />
-        </Carousel>
+                    </Link>
+                  </motion.div>
+                </CarouselItem>
+              ))}
+            </CarouselContent>
+            <CarouselPrevious className="left-0 border-primary/30 bg-background hover:bg-primary/10" />
+            <CarouselNext className="right-0 border-primary/30 bg-background hover:bg-primary/10" />
+          </Carousel>
+        )}
       </div>
     </section>
   );

@@ -1,6 +1,7 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 
+// Base protect middleware — validates token and cross-checks embedded role vs DB role
 const protect = async (req, res, next) => {
   let token;
 
@@ -9,36 +10,51 @@ const protect = async (req, res, next) => {
     req.headers.authorization.startsWith('Bearer')
   ) {
     try {
-      // Get token from header
       token = req.headers.authorization.split(' ')[1];
 
-      // Verify token
+      // Decode and verify token
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-      // Get user from the token
-      req.user = await User.findById(decoded.id).select('-password');
+      // Fetch user from DB
+      const user = await User.findById(decoded.id).select('-password');
 
+      if (!user) {
+        return res.status(401).json({ message: 'User no longer exists' });
+      }
+
+      // Cross-validate: the role embedded in the token must match the DB role.
+      // This prevents using a customer token to hit admin routes even if ids matched.
+      if (decoded.role && decoded.role !== user.role) {
+        return res.status(401).json({ message: 'Token role mismatch — please login again' });
+      }
+
+      req.user = user;
       next();
     } catch (error) {
       console.error(error);
-      res.status(401).json({ message: 'Not authorized, token failed' });
+      return res.status(401).json({ message: 'Not authorized, token failed' });
     }
-  }
-
-  if (!token) {
-    res.status(401).json({ message: 'Not authorized, no token' });
+  } else {
+    return res.status(401).json({ message: 'Not authorized, no token' });
   }
 };
 
+// Role-based access guard
 const authorize = (...roles) => {
   return (req, res, next) => {
     if (!roles.includes(req.user.role)) {
       return res.status(403).json({
-        message: `User role ${req.user.role} is not authorized to access this route`
+        message: `Access denied: '${req.user.role}' role cannot access this resource`,
       });
     }
     next();
   };
 };
 
-module.exports = { protect, authorize };
+// Convenience role-specific protect middlewares
+const protectAdmin    = [protect, authorize('admin')];
+const protectArtist   = [protect, authorize('artist')];
+const protectCustomer = [protect, authorize('customer')];
+
+module.exports = { protect, authorize, protectAdmin, protectArtist, protectCustomer };
+

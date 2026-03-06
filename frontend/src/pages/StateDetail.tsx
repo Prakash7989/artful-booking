@@ -1,93 +1,56 @@
+import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { 
-  ArrowRight, MapPin, Users, Palette, Music, 
-  Star, Calendar, Play
+import {
+  ArrowRight, MapPin, Users, Palette, Music,
+  Star, Calendar, Play, Loader2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import MainLayout from "@/components/layout/MainLayout";
 
-// Mock state data - in production this would come from API
-const statesData: Record<string, {
-  id: string;
-  name: string;
-  region: string;
-  icon: string;
-  description: string;
-  culturalHighlights: string[];
-  artForms: Array<{
-    id: string;
-    name: string;
-    type: string;
-    description: string;
-    image: string;
-  }>;
-  featuredArtists: Array<{
-    id: string;
-    name: string;
-    artForm: string;
-    rating: number;
-    reviews: number;
-    price: number;
-    image: string;
-    available: boolean;
-  }>;
-}> = {
-  "andhra-pradesh": {
-    id: "andhra-pradesh",
-    name: "Andhra Pradesh",
-    region: "South India",
-    icon: "🏛️",
-    description: "Andhra Pradesh is a treasure trove of classical and folk arts. The state is renowned for its Kuchipudi dance, which originated in the village of Kuchipudi, and its vibrant folk traditions like Burrakatha and Harikatha. The rich musical heritage includes Carnatic music and various folk songs that celebrate the agricultural and cultural life of the region.",
-    culturalHighlights: [
-      "Birthplace of Kuchipudi classical dance",
-      "Rich tradition of Carnatic music",
-      "Famous for Kalamkari textile art",
-      "Vibrant temple festival traditions",
-      "Traditional shadow puppetry (Tholu Bommalata)"
-    ],
-    artForms: [
-      { id: "kuchipudi", name: "Kuchipudi", type: "Classical Dance", description: "One of the eight major classical dances of India, known for its grace and dramatic storytelling", image: "/placeholder.svg" },
-      { id: "burrakatha", name: "Burrakatha", type: "Folk Theatre", description: "A traditional oral storytelling art form with music and dance", image: "/placeholder.svg" },
-      { id: "kolattam", name: "Kolattam", type: "Folk Dance", description: "A rhythmic stick dance performed during festivals", image: "/placeholder.svg" },
-      { id: "carnatic", name: "Carnatic Music", type: "Classical Music", description: "South Indian classical music tradition with rich melodic and rhythmic systems", image: "/placeholder.svg" },
-      { id: "tholu-bommalata", name: "Tholu Bommalata", type: "Puppetry", description: "Traditional leather shadow puppet theatre", image: "/placeholder.svg" },
-      { id: "harikatha", name: "Harikatha", type: "Musical Storytelling", description: "Religious storytelling through music and narrative", image: "/placeholder.svg" },
-    ],
-    featuredArtists: [
-      { id: "1", name: "Padmini Rao", artForm: "Kuchipudi", rating: 4.9, reviews: 89, price: 18000, image: "👩‍🎨", available: true },
-      { id: "2", name: "Guru Venkatesh", artForm: "Carnatic Music", rating: 5.0, reviews: 124, price: 25000, image: "🎵", available: true },
-      { id: "3", name: "Burrakatha Ramaiah", artForm: "Burrakatha", rating: 4.7, reviews: 45, price: 12000, image: "🎭", available: false },
-      { id: "4", name: "Kolattam Troupe Vijayawada", artForm: "Kolattam", rating: 4.8, reviews: 67, price: 15000, image: "🪘", available: true },
-    ]
-  },
-  // Add more states as needed - using default for unmatched
-};
-
-const defaultState = {
-  id: "unknown",
-  name: "State",
-  region: "India",
-  icon: "🇮🇳",
-  description: "This state has a rich cultural heritage with diverse folk and classical art traditions. Explore the artists and art forms that make this region unique.",
-  culturalHighlights: [
-    "Rich folk traditions",
-    "Classical music and dance",
-    "Traditional crafts",
-    "Festival celebrations"
-  ],
-  artForms: [
-    { id: "folk-dance", name: "Folk Dance", type: "Folk Dance", description: "Traditional dance forms of the region", image: "/placeholder.svg" },
-    { id: "folk-music", name: "Folk Music", type: "Folk Music", description: "Traditional music and songs", image: "/placeholder.svg" },
-  ],
-  featuredArtists: []
-};
-
 const StateDetail = () => {
   const { stateId } = useParams();
-  const state = statesData[stateId || ""] || { ...defaultState, name: stateId?.split("-").map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" ") || "State" };
+  const [state, setState] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchState = async () => {
+      setIsLoading(true);
+      try {
+        const response = await fetch(`/api/states/${stateId}`);
+        const data = await response.json();
+        setState(data);
+      } catch (error) {
+        console.error("Error fetching state details:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchState();
+  }, [stateId]);
+
+  if (isLoading) {
+    return (
+      <MainLayout>
+        <div className="flex h-screen items-center justify-center">
+          <Loader2 className="h-12 w-12 animate-spin text-primary" />
+        </div>
+      </MainLayout>
+    );
+  }
+
+  if (!state) {
+    return (
+      <MainLayout>
+        <div className="flex h-screen flex-col items-center justify-center">
+          <h2 className="text-2xl font-bold">State not found</h2>
+          <Link to="/states" className="mt-4 text-primary underline">Back to States</Link>
+        </div>
+      </MainLayout>
+    );
+  }
 
   return (
     <MainLayout>
@@ -241,25 +204,28 @@ const StateDetail = () => {
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
               {state.featuredArtists.map((artist, index) => (
                 <motion.div
-                  key={artist.id}
+                  key={artist._id}
                   initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.1 }}
                   viewport={{ once: true }}
                 >
                   <Link
-                    to={`/artists/${artist.id}`}
+                    to={`/artists/${artist._id}`}
                     className="group block overflow-hidden rounded-xl border border-border bg-card transition-all hover:border-primary/30 hover:shadow-warm"
                   >
                     {/* Artist Image */}
                     <div className="relative aspect-square bg-gradient-to-br from-primary/10 to-accent/10">
-                      <div className="absolute inset-0 flex items-center justify-center text-6xl">
-                        {artist.image}
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <img
+                          src={artist.profileImage || "https://icon-library.com/images/anonymous-avatar-icon/anonymous-avatar-icon-25.jpg"}
+                          className="h-full w-full object-cover"
+                          alt={artist.name}
+                        />
                       </div>
                       <Badge
-                        className={`absolute right-3 top-3 ${
-                          artist.available ? "bg-green-500 hover:bg-green-600" : ""
-                        }`}
+                        className={`absolute right-3 top-3 ${artist.available ? "bg-green-500 hover:bg-green-600" : ""
+                          }`}
                         variant={artist.available ? "default" : "secondary"}
                       >
                         {artist.available ? "Available" : "Booked"}
@@ -271,19 +237,19 @@ const StateDetail = () => {
                       <h3 className="font-display text-lg font-semibold text-foreground group-hover:text-primary">
                         {artist.name}
                       </h3>
-                      <p className="mb-2 text-sm text-primary">{artist.artForm}</p>
-                      
+                      <p className="mb-2 text-sm text-primary">{artist.artForm || artist.specialty}</p>
+
                       <div className="mb-3 flex items-center gap-1 text-sm">
                         <Star className="h-4 w-4 fill-accent text-accent" />
-                        <span className="font-medium">{artist.rating}</span>
-                        <span className="text-muted-foreground">({artist.reviews})</span>
+                        <span className="font-medium">{artist.rating || 4.5}</span>
+                        <span className="text-muted-foreground">({artist.reviewsCount || 0})</span>
                       </div>
 
                       <div className="flex items-center justify-between border-t border-border pt-3">
                         <div>
                           <span className="text-xs text-muted-foreground">From</span>
                           <p className="font-semibold text-foreground">
-                            ₹{artist.price.toLocaleString("en-IN")}
+                            ₹{(artist.price || 0).toLocaleString("en-IN")}
                           </p>
                         </div>
                         <Button size="sm" className="bg-gradient-saffron hover:opacity-90">
