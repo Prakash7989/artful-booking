@@ -152,7 +152,7 @@ const updateArtistProfile = async (req, res) => {
       name, bio, state, specialty, 
       experience, price, story, 
       galleryToDelete, availability,
-      pricing, available
+      pricing, available, approvalStatus
     } = req.body;
 
     // Update basic fields
@@ -164,6 +164,7 @@ const updateArtistProfile = async (req, res) => {
     artist.price = price !== undefined ? Number(price) : artist.price;
     artist.story = story !== undefined ? story : artist.story;
     artist.available = available !== undefined ? available === 'true' || available === true : artist.available;
+    artist.approvalStatus = approvalStatus !== undefined ? approvalStatus : artist.approvalStatus;
 
     // Handle Availability & Pricing (passed as JSON strings in multipart/form-data)
     if (availability) artist.availability = JSON.parse(availability);
@@ -202,9 +203,43 @@ const updateArtistProfile = async (req, res) => {
   }
 };
 
+// @desc    Add a review for an artist
+// @route   POST /api/artists/:id/reviews
+// @access  Private (Customer)
+const addReview = async (req, res) => {
+  try {
+    const { rating, comment } = req.body;
+    const artist = await User.findById(req.params.id);
+
+    if (!artist || artist.role !== 'artist') {
+      return res.status(404).json({ message: 'Artist not found' });
+    }
+
+    const review = {
+      user: req.user.name,
+      rating: Number(rating),
+      comment,
+      date: new Date().toISOString()
+    };
+
+    artist.customerReviews.push(review);
+    artist.reviewsCount = artist.customerReviews.length;
+
+    // Calculate dynamic rating
+    const totalRating = artist.customerReviews.reduce((acc, item) => item.rating + acc, 0);
+    artist.rating = (totalRating / artist.customerReviews.length).toFixed(1);
+
+    await artist.save();
+    res.status(201).json({ message: 'Review added successfully' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 module.exports = {
   getArtists,
   getArtistById,
   getArtistProfile,
-  updateArtistProfile
+  updateArtistProfile,
+  addReview
 };

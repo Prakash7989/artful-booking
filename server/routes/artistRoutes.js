@@ -6,12 +6,14 @@ const {
   getArtists, 
   getArtistById, 
   getArtistProfile, 
-  updateArtistProfile 
+  updateArtistProfile,
+  addReview
 } = require('../controllers/artistController');
 
 router.get('/', getArtists);
 router.get('/me', protect, getArtistProfile);
 router.get('/:id', getArtistById);
 router.put('/profile', protect, upload.array('images', 10), updateArtistProfile);
+router.post('/:id/reviews', protect, addReview);
 
 module.exports = router;

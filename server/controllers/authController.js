@@ -57,7 +57,8 @@ const registerUser = async (req, res) => {
       state,
       specialty,
       awards,
-      isApproved: userRole === 'artist' ? false : true
+      isApproved: userRole === 'artist' ? false : true,
+      approvalStatus: userRole === 'artist' ? 'draft' : 'approved'
     });
 
     if (user) {

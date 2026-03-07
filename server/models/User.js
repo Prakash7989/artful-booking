@@ -69,6 +69,11 @@ const userSchema = new mongoose.Schema({
     type: Boolean,
     default: false // Artists should be false by default until admin approves
   },
+  approvalStatus: {
+    type: String,
+    enum: ['draft', 'pending', 'approved', 'rejected'],
+    default: 'draft'
+  },
   // Additional fields for Artist Profile
   story: {
     type: String

@@ -2,6 +2,9 @@ import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Loader2 } from "lucide-react";
 
 interface Artist {
     _id: string;
@@ -11,8 +14,14 @@ interface Artist {
     bio?: string;
     state?: string;
     specialty?: string;
+    artForm?: string;
+    experience?: string;
+    story?: string;
+    price?: number;
     awards?: string;
+    gallery?: { url: string; type: string; title?: string }[];
     isApproved: boolean;
+    approvalStatus: 'draft' | 'pending' | 'approved' | 'rejected';
     createdAt: string;
 }
 
@@ -26,7 +35,18 @@ interface UserRecord {
     createdAt: string;
 }
 
-type ActiveTab = 'pending' | 'artists' | 'users';
+interface Booking {
+    _id: string;
+    customer: { _id: string; name: string; email: string; profileImage: string };
+    artist: { _id: string; name: string; email: string; profileImage: string; artForm: string; specialty: string };
+    date: string;
+    status: 'pending' | 'confirmed' | 'completed' | 'cancelled';
+    price: number;
+    location: string;
+    createdAt: string;
+}
+
+type ActiveTab = 'pending' | 'artists' | 'users' | 'bookings';
 
 export default function AdminDashboard() {
     const { user, logout } = useAuth();
@@ -36,10 +56,13 @@ export default function AdminDashboard() {
     const [activeTab, setActiveTab] = useState<ActiveTab>('pending');
     const [artists, setArtists] = useState<Artist[]>([]);
     const [users, setUsers] = useState<UserRecord[]>([]);
+    const [bookings, setBookings] = useState<Booking[]>([]);
     const [isLoadingArtists, setIsLoadingArtists] = useState(false);
     const [isLoadingUsers, setIsLoadingUsers] = useState(false);
+    const [isLoadingBookings, setIsLoadingBookings] = useState(false);
     const [actionLoading, setActionLoading] = useState<string | null>(null);
     const [sidebarOpen, setSidebarOpen] = useState(true);
+    const [selectedArtist, setSelectedArtist] = useState<any>(null);
 
     const token = user?.token || localStorage.getItem('token');
 
@@ -76,13 +99,28 @@ export default function AdminDashboard() {
         }
     }, [token]);
 
+    const fetchBookings = useCallback(async () => {
+        setIsLoadingBookings(true);
+        try {
+            const res = await fetch('/api/admin/bookings', { headers: authHeaders });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.message);
+            setBookings(data);
+        } catch (err: any) {
+            toast({ variant: 'destructive', title: 'Error', description: err.message });
+        } finally {
+            setIsLoadingBookings(false);
+        }
+    }, [token]);
+
     useEffect(() => {
         fetchArtists();
     }, [fetchArtists]);
 
     useEffect(() => {
         if (activeTab === 'users') fetchUsers();
-    }, [activeTab, fetchUsers]);
+        if (activeTab === 'bookings') fetchBookings();
+    }, [activeTab, fetchUsers, fetchBookings]);
 
     const approveArtist = async (id: string) => {
         setActionLoading(id + '-approve');
@@ -136,7 +174,7 @@ export default function AdminDashboard() {
         navigate('/admin/login');
     };
 
-    const pendingArtists = artists.filter((a) => !a.isApproved);
+    const pendingArtists = artists.filter((a) => a.approvalStatus === 'pending' || (!a.isApproved && a.approvalStatus !== 'rejected'));
 
     const navItems: { id: ActiveTab; label: string; icon: React.ReactNode; count?: number }[] = [
         {
@@ -165,6 +203,15 @@ export default function AdminDashboard() {
             icon: (
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+            ),
+        },
+        {
+            id: 'bookings',
+            label: 'Global Bookings',
+            icon: (
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
                 </svg>
             ),
         },
@@ -208,8 +255,8 @@ export default function AdminDashboard() {
                             key={item.id}
                             onClick={() => setActiveTab(item.id)}
                             className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${activeTab === item.id
-                                    ? 'bg-violet-600/20 text-violet-300 border border-violet-500/30'
-                                    : 'text-gray-400 hover:bg-gray-800 hover:text-gray-200'
+                                ? 'bg-violet-600/20 text-violet-300 border border-violet-500/30'
+                                : 'text-gray-400 hover:bg-gray-800 hover:text-gray-200'
                                 }`}
                         >
                             <span className="flex-shrink-0">{item.icon}</span>
@@ -219,8 +266,8 @@ export default function AdminDashboard() {
                                     {item.count !== undefined && (
                                         <span
                                             className={`ml-auto text-xs font-bold px-2 py-0.5 rounded-full flex-shrink-0 ${item.id === 'pending' && item.count > 0
-                                                    ? 'bg-amber-500/20 text-amber-300'
-                                                    : 'bg-gray-700 text-gray-400'
+                                                ? 'bg-amber-500/20 text-amber-300'
+                                                : 'bg-gray-700 text-gray-400'
                                                 }`}
                                         >
                                             {item.count}
@@ -281,6 +328,7 @@ export default function AdminDashboard() {
                             {activeTab === 'pending' && `${pendingArtists.length} artist(s) awaiting review`}
                             {activeTab === 'artists' && `${artists.length} total artists registered`}
                             {activeTab === 'users' && `${users.length} total users`}
+                            {activeTab === 'bookings' && `${bookings.length} total bookings`}
                         </p>
                     </div>
                     <button
@@ -313,6 +361,7 @@ export default function AdminDashboard() {
                                             onApprove={approveArtist}
                                             onReject={rejectArtist}
                                             onDelete={deleteUser}
+                                            onViewDetails={(a) => setSelectedArtist(a)}
                                         />
                                     ))}
                                 </div>
@@ -359,7 +408,7 @@ export default function AdminDashboard() {
                                                     <td className="px-5 py-3 text-gray-300 text-sm">{artist.specialty || '—'}</td>
                                                     <td className="px-5 py-3 text-gray-300 text-sm">{artist.state || '—'}</td>
                                                     <td className="px-5 py-3">
-                                                        <StatusBadge approved={artist.isApproved} />
+                                                        <StatusBadge approved={artist.isApproved} status={artist.approvalStatus} />
                                                     </td>
                                                     <td className="px-5 py-3 text-gray-500 text-xs">{new Date(artist.createdAt).toLocaleDateString()}</td>
                                                     <td className="px-5 py-3">
@@ -379,6 +428,16 @@ export default function AdminDashboard() {
                                                                     label="Revoke"
                                                                 />
                                                             )}
+                                                            <button
+                                                                onClick={() => setSelectedArtist(artist)}
+                                                                className="p-2 text-gray-400 hover:text-white transition-colors"
+                                                                title="View Details"
+                                                            >
+                                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                                                </svg>
+                                                            </button>
                                                             <ActionButton
                                                                 onClick={() => deleteUser(artist._id)}
                                                                 loading={actionLoading === artist._id + '-delete'}
@@ -456,8 +515,166 @@ export default function AdminDashboard() {
                             )}
                         </div>
                     )}
+
+                    {/* ── GLOBAL BOOKINGS ── */}
+                    {activeTab === 'bookings' && (
+                        <div>
+                            {isLoadingBookings ? (
+                                <LoadingSpinner />
+                            ) : bookings.length === 0 ? (
+                                <EmptyState icon="📅" title="No bookings yet" desc="All bookings across the platform will appear here." />
+                            ) : (
+                                <div className="bg-gray-900 border border-gray-800 rounded-2xl overflow-hidden">
+                                    <table className="w-full">
+                                        <thead>
+                                            <tr className="border-b border-gray-800">
+                                                <th className="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider px-5 py-3">Customer</th>
+                                                <th className="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider px-5 py-3">Artist</th>
+                                                <th className="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider px-5 py-3">Date</th>
+                                                <th className="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider px-5 py-3">Status</th>
+                                                <th className="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider px-5 py-3">Price</th>
+                                                <th className="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider px-5 py-3">Venue</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-gray-800">
+                                            {bookings.map((booking) => (
+                                                <tr key={booking._id} className="hover:bg-gray-800/40 transition-colors">
+                                                    <td className="px-5 py-3">
+                                                        <div className="flex items-center gap-2">
+                                                            <img src={booking.customer?.profileImage} className="w-7 h-7 rounded-full object-cover" />
+                                                            <div>
+                                                                <p className="text-white text-xs font-medium">{booking.customer?.name}</p>
+                                                                <p className="text-gray-500 text-[10px]">{booking.customer?.email}</p>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-5 py-3">
+                                                        <div className="flex items-center gap-2">
+                                                            <img src={booking.artist?.profileImage} className="w-7 h-7 rounded-full object-cover" />
+                                                            <div>
+                                                                <p className="text-white text-xs font-medium">{booking.artist?.name}</p>
+                                                                <p className="text-gray-500 text-[10px]">{booking.artist?.specialty}</p>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-5 py-3 text-gray-300 text-xs">
+                                                        {new Date(booking.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                                                    </td>
+                                                    <td className="px-5 py-3">
+                                                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${booking.status === 'confirmed' ? 'bg-green-500/20 text-green-400' :
+                                                            booking.status === 'pending' ? 'bg-amber-500/20 text-amber-400' :
+                                                                booking.status === 'cancelled' ? 'bg-red-500/20 text-red-400' : 'bg-blue-500/20 text-blue-400'
+                                                            }`}>
+                                                            {booking.status}
+                                                        </span>
+                                                    </td>
+                                                    <td className="px-5 py-3 text-white text-xs font-bold">₹{booking.price?.toLocaleString()}</td>
+                                                    <td className="px-5 py-3 text-gray-500 text-xs truncate max-w-[150px]">{booking.location}</td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            )}
+                        </div>
+                    )}
                 </div>
             </main>
+
+            {/* Artist Detail Modal */}
+            {selectedArtist && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
+                    <div className="bg-gray-900 border border-gray-800 rounded-3xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl">
+                        <div className="p-6 border-b border-gray-800 flex items-center justify-between bg-gray-900/50">
+                            <div className="flex items-center gap-4">
+                                <img src={selectedArtist.profileImage} className="w-16 h-16 rounded-2xl object-cover border-2 border-gray-700" />
+                                <div>
+                                    <h2 className="text-white font-bold text-2xl">{selectedArtist.name}</h2>
+                                    <p className="text-gray-400 text-sm">{selectedArtist.email} • {selectedArtist.state}</p>
+                                </div>
+                            </div>
+                            <button onClick={() => setSelectedArtist(null)} className="p-2 text-gray-500 hover:text-white transition-colors">
+                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </div>
+                        <div className="flex-1 overflow-auto p-6 space-y-8">
+                            <div className="grid md:grid-cols-2 gap-8">
+                                <div className="space-y-6">
+                                    <section>
+                                        <h3 className="text-violet-400 text-xs font-bold uppercase tracking-widest mb-2">Professional Summary</h3>
+                                        <p className="text-gray-300 text-sm leading-relaxed">{selectedArtist.bio || 'No bio provided.'}</p>
+                                    </section>
+                                    <section>
+                                        <h3 className="text-violet-400 text-xs font-bold uppercase tracking-widest mb-2">Art Form & Specialty</h3>
+                                        <div className="flex flex-wrap gap-2">
+                                            <Badge className="bg-blue-500/10 text-blue-400 border-blue-500/20">{selectedArtist.artForm}</Badge>
+                                            <Badge className="bg-violet-500/10 text-violet-400 border-violet-500/20">{selectedArtist.specialty}</Badge>
+                                            <Badge className="bg-amber-500/10 text-amber-400 border-amber-500/20">{selectedArtist.experience}</Badge>
+                                        </div>
+                                    </section>
+                                    <section>
+                                        <h3 className="text-violet-400 text-xs font-bold uppercase tracking-widest mb-2">Base Price</h3>
+                                        <p className="text-white font-bold text-xl">₹{selectedArtist.price?.toLocaleString()} <span className="text-gray-500 text-xs font-normal">per performance</span></p>
+                                    </section>
+                                </div>
+                                <div className="space-y-6">
+                                    <section>
+                                        <h3 className="text-violet-400 text-xs font-bold uppercase tracking-widest mb-2">The Artist's Story</h3>
+                                        <p className="text-gray-400 text-sm italic">"{selectedArtist.story || 'No story provided.'}"</p>
+                                    </section>
+                                    {selectedArtist.awards && (
+                                        <section>
+                                            <h3 className="text-violet-400 text-xs font-bold uppercase tracking-widest mb-2">Awards & Recognition</h3>
+                                            <p className="text-gray-300 text-sm">{selectedArtist.awards}</p>
+                                        </section>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Gallery Preview */}
+                            {selectedArtist.gallery?.length > 0 && (
+                                <section>
+                                    <h3 className="text-violet-400 text-xs font-bold uppercase tracking-widest mb-4">Gallery ({selectedArtist.gallery.length})</h3>
+                                    <div className="grid grid-cols-4 sm:grid-cols-6 gap-3">
+                                        {selectedArtist.gallery.map((img: any, i: number) => (
+                                            <img key={i} src={img.url} className="aspect-square rounded-lg object-cover border border-gray-800 hover:border-violet-500/50 transition-colors cursor-pointer" />
+                                        ))}
+                                    </div>
+                                </section>
+                            )}
+                        </div>
+                        <div className="p-6 border-t border-gray-800 bg-gray-900/50 flex gap-3">
+                            {!selectedArtist.isApproved ? (
+                                <Button
+                                    className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-6 rounded-xl"
+                                    onClick={() => { approveArtist(selectedArtist._id); setSelectedArtist(null); }}
+                                    disabled={!!actionLoading}
+                                >
+                                    Approve Profile
+                                </Button>
+                            ) : (
+                                <Button
+                                    className="flex-1 bg-amber-600 hover:bg-amber-500 text-white font-bold py-6 rounded-xl"
+                                    onClick={() => { rejectArtist(selectedArtist._id); setSelectedArtist(null); }}
+                                    disabled={!!actionLoading}
+                                >
+                                    Revoke Approval
+                                </Button>
+                            )}
+                            <Button
+                                variant="destructive"
+                                className="px-8 py-6 rounded-xl font-bold"
+                                onClick={() => { deleteUser(selectedArtist._id); setSelectedArtist(null); }}
+                                disabled={!!actionLoading}
+                            >
+                                Delete Artist
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
@@ -470,12 +687,14 @@ function ArtistCard({
     onApprove,
     onReject,
     onDelete,
+    onViewDetails,
 }: {
     artist: Artist;
     actionLoading: string | null;
     onApprove: (id: string) => void;
     onReject: (id: string) => void;
     onDelete: (id: string) => void;
+    onViewDetails: (artist: Artist) => void;
 }) {
     return (
         <div className="bg-gray-900 border border-gray-800 rounded-2xl overflow-hidden hover:border-gray-700 transition-all duration-200">
@@ -525,10 +744,10 @@ function ArtistCard({
                         fullWidth
                     />
                     <ActionButton
-                        onClick={() => onReject(artist._id)}
-                        loading={actionLoading === artist._id + '-reject'}
+                        onClick={() => onViewDetails(artist)}
+                        loading={false}
                         variant="reject"
-                        label="Reject"
+                        label="Details"
                         fullWidth
                     />
                     <ActionButton
@@ -557,7 +776,14 @@ function Info({ label, value }: { label: string; value: string }) {
     );
 }
 
-function StatusBadge({ approved }: { approved: boolean }) {
+function StatusBadge({ approved, status }: { approved: boolean; status?: string }) {
+    if (status === 'rejected') {
+        return (
+            <span className="inline-flex items-center gap-1 text-xs bg-red-500/15 text-red-400 border border-red-500/20 px-2.5 py-1 rounded-full font-medium">
+                <span className="w-1.5 h-1.5 rounded-full bg-red-400" /> Rejected
+            </span>
+        );
+    }
     return approved ? (
         <span className="inline-flex items-center gap-1 text-xs bg-emerald-500/15 text-emerald-400 border border-emerald-500/20 px-2.5 py-1 rounded-full font-medium">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" /> Approved

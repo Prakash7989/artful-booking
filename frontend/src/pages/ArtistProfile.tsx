@@ -11,6 +11,8 @@ import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { format } from "date-fns";
+import { toast } from "sonner";
 import MainLayout from "@/components/layout/MainLayout";
 import BookingModal from "@/components/BookingModal";
 
@@ -23,6 +25,10 @@ const ArtistProfile = () => {
   const [currentGalleryIndex, setCurrentGalleryIndex] = useState(0);
   const [isWishlisted, setIsWishlisted] = useState(false);
   const [selectedPackage, setSelectedPackage] = useState<any>(null);
+  const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [reviewRating, setReviewRating] = useState(5);
+  const [reviewComment, setReviewComment] = useState("");
+  const [isSubmittingReview, setIsSubmittingReview] = useState(false);
 
   useEffect(() => {
     const fetchArtist = async () => {
@@ -471,12 +477,22 @@ const ArtistProfile = () => {
 
                     <div className="rounded-2xl border border-border p-6 shadow-inner bg-muted/5">
                       <div className="mb-6 flex items-center justify-between">
-                        <h4 className="text-lg font-bold">March 2026</h4>
+                        <h4 className="text-lg font-bold">{format(currentMonth, 'MMMM yyyy')}</h4>
                         <div className="flex gap-2">
-                          <Button variant="outline" size="icon" className="rounded-full h-8 w-8">
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            className="rounded-full h-8 w-8"
+                            onClick={() => setCurrentMonth(new Date(currentMonth.setMonth(currentMonth.getMonth() - 1)))}
+                          >
                             <ChevronLeft className="h-4 w-4" />
                           </Button>
-                          <Button variant="outline" size="icon" className="rounded-full h-8 w-8">
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            className="rounded-full h-8 w-8"
+                            onClick={() => setCurrentMonth(new Date(currentMonth.setMonth(currentMonth.getMonth() + 1)))}
+                          >
                             <ChevronRight className="h-4 w-4" />
                           </Button>
                         </div>
@@ -487,9 +503,14 @@ const ArtistProfile = () => {
                             {day}
                           </div>
                         ))}
-                        {Array.from({ length: 31 }, (_, i) => {
+                        {/* Fill empty slots for the first week */}
+                        {Array.from({ length: new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1).getDay() }).map((_, i) => (
+                          <div key={`empty-${i}`} className="aspect-square" />
+                        ))}
+                        {Array.from({ length: new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0).getDate() }, (_, i) => {
                           const day = i + 1;
-                          const dateStr = `2026-03-${day.toString().padStart(2, "0")}`;
+                          const date = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day);
+                          const dateStr = format(date, 'yyyy-MM-dd');
                           const isBlocked = artist?.availability?.blockedDates?.includes(dateStr);
                           const isBooked = artist?.availability?.bookedDates?.includes(dateStr);
 
@@ -503,6 +524,10 @@ const ArtistProfile = () => {
                                   : "bg-green-500/10 text-green-700 hover:bg-green-500/30 ring-1 ring-inset ring-green-500/20"
                                 }`}
                               disabled={isBlocked || isBooked}
+                              onClick={() => {
+                                setSelectedDate(date);
+                                setIsBookingModalOpen(true);
+                              }}
                             >
                               {day}
                             </button>
@@ -526,15 +551,79 @@ const ArtistProfile = () => {
             <TabsContent value="reviews" className="animate-in fade-in slide-in-from-bottom-4 duration-500">
               <div className="max-w-4xl mx-auto">
                 <div className="grid gap-8 lg:grid-cols-3">
-                  <Card className="lg:col-span-1 rounded-3xl border-none bg-card shadow-lg p-6 flex flex-col items-center justify-center text-center">
-                    <span className="text-5xl font-extrabold text-foreground">{artist.rating || 4.5}</span>
-                    <div className="flex my-3">
-                      {Array.from({ length: 5 }, (_, i) => (
-                        <Star key={i} className={`h-5 w-5 ${i < Math.floor(artist.rating || 4) ? "fill-saffron-500 text-saffron-500" : "text-muted"}`} />
-                      ))}
-                    </div>
-                    <p className="text-muted-foreground text-sm">Average rating from {artist.reviewsCount || 0} authentic reviews</p>
-                  </Card>
+                  <div className="lg:col-span-1 space-y-6">
+                    <Card className="rounded-3xl border-none bg-card shadow-lg p-6 flex flex-col items-center justify-center text-center">
+                      <span className="text-5xl font-extrabold text-foreground">{artist.rating || 0}</span>
+                      <div className="flex my-3">
+                        {Array.from({ length: 5 }, (_, i) => (
+                          <Star key={i} className={`h-5 w-5 ${i < Math.floor(artist.rating || 0) ? "fill-saffron-500 text-saffron-500" : "text-muted"}`} />
+                        ))}
+                      </div>
+                      <p className="text-muted-foreground text-sm">Average rating from {artist.reviewsCount || 0} reviews</p>
+                    </Card>
+
+                    {/* Write a Review Section */}
+                    <Card className="rounded-3xl border-none bg-card shadow-lg p-6">
+                      <h4 className="font-bold text-lg mb-4">Write a Review</h4>
+                      <div className="space-y-4">
+                        <div className="flex items-center gap-1">
+                          {[1, 2, 3, 4, 5].map((star) => (
+                            <button
+                              key={star}
+                              onClick={() => setReviewRating(star)}
+                              className="focus:outline-none"
+                            >
+                              <Star className={`h-6 w-6 ${star <= reviewRating ? "fill-saffron-500 text-saffron-500" : "text-muted"}`} />
+                            </button>
+                          ))}
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="review-comment">Your Comment</Label>
+                          <textarea
+                            id="review-comment"
+                            value={reviewComment}
+                            onChange={(e) => setReviewComment(e.target.value)}
+                            placeholder="Share your experience..."
+                            className="w-full min-h-[100px] rounded-xl border border-border bg-card p-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+                          />
+                        </div>
+                        <Button
+                          className="w-full rounded-full bg-primary"
+                          disabled={isSubmittingReview || !reviewComment}
+                          onClick={async () => {
+                            setIsSubmittingReview(true);
+                            try {
+                              const token = localStorage.getItem('token');
+                              const response = await fetch(`/api/artists/${artist._id}/reviews`, {
+                                method: 'POST',
+                                headers: {
+                                  'Content-Type': 'application/json',
+                                  'Authorization': `Bearer ${token}`
+                                },
+                                body: JSON.stringify({ rating: reviewRating, comment: reviewComment })
+                              });
+                              if (response.ok) {
+                                // Refresh artist data
+                                const res = await fetch(`/api/artists/${artist._id}`);
+                                const data = await res.json();
+                                setArtist(data);
+                                setReviewComment("");
+                                setReviewRating(5);
+                                toast.success("Review submitted!");
+                              }
+                            } catch (e) {
+                              toast.error("Failed to submit review");
+                            } finally {
+                              setIsSubmittingReview(false);
+                            }
+                          }}
+                        >
+                          {isSubmittingReview ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                          Submit Review
+                        </Button>
+                      </div>
+                    </Card>
+                  </div>
 
                   <Card className="lg:col-span-2 rounded-3xl border-none bg-transparent shadow-none">
                     <CardHeader className="px-0 pt-0">
@@ -542,7 +631,7 @@ const ArtistProfile = () => {
                     </CardHeader>
                     <CardContent className="px-0 space-y-4">
                       {artist?.customerReviews?.length > 0 ? (
-                        artist.customerReviews.map((review: any) => (
+                        artist.customerReviews.map((review: any, idx: number) => (
                           <div key={review.id || review._id} className="rounded-2xl border bg-card p-6 shadow-sm hover:shadow-md transition-all">
                             <div className="mb-4 flex items-center justify-between">
                               <div className="flex items-center gap-3">

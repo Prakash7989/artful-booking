@@ -28,6 +28,7 @@ const approveArtist = async (req, res) => {
     }
 
     user.isApproved = true;
+    user.approvalStatus = 'approved';
     await user.save();
 
     res.status(200).json({ message: 'Artist approved successfully', user });
@@ -52,6 +53,7 @@ const rejectArtist = async (req, res) => {
     }
 
     user.isApproved = false;
+    user.approvalStatus = 'rejected';
     await user.save();
 
     res.status(200).json({ message: 'Artist rejected successfully', user });
@@ -94,10 +96,27 @@ const deleteUser = async (req, res) => {
   }
 };
 
+// @desc    Get all bookings in the system
+// @route   GET /api/admin/bookings
+// @access  Private/Admin
+const getAllBookings = async (req, res) => {
+  try {
+    const Booking = require('../models/Booking');
+    const bookings = await Booking.find()
+      .populate('customer', 'name email profileImage')
+      .populate('artist', 'name email profileImage artForm specialty')
+      .sort({ date: -1 });
+    res.status(200).json(bookings);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 module.exports = {
   getArtists,
   approveArtist,
   rejectArtist,
   getAllUsers,
   deleteUser,
+  getAllBookings,
 };
