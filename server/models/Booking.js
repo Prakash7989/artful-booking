@@ -24,6 +24,16 @@ const bookingSchema = new mongoose.Schema({
     type: Number,
     required: true
   },
+  pricingPackage: {
+    name: String,
+    price: Number,
+    duration: String,
+    description: String
+  },
+  location: {
+    type: String,
+    default: 'Venue TBD'
+  },
   message: {
     type: String
   }

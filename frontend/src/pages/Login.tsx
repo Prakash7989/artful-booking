@@ -42,7 +42,13 @@ export default function Login() {
                 title: 'Success',
                 description: 'Logged in successfully',
             });
-            navigate('/');
+            if (data.role === 'artist') {
+                navigate('/artist/dashboard');
+            } else if (data.role === 'admin') {
+                navigate('/admin');
+            } else {
+                navigate('/');
+            }
         } catch (error: any) {
             toast({
                 variant: 'destructive',

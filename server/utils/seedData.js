@@ -1,5 +1,6 @@
 const State = require('../models/State');
 const ArtForm = require('../models/ArtForm');
+const User = require('../models/User');
 
 const states = [
   // South
@@ -61,6 +62,46 @@ const artForms = [
   { name: "Ghoomar", type: "Folk Dance", description: "Traditional folk dance of Rajasthan", state: "rajasthan" },
 ];
 
+const seedArtists = [
+  {
+    name: "Rajesh Kalbelia",
+    email: "rajesh@example.com",
+    password: "password123",
+    role: "artist",
+    profileImage: "https://images.unsplash.com/photo-1583417319070-4a69db38a482?auto=format&fit=crop&q=80&w=800",
+    bio: "Rajesh is a master of the Kalbelia folk dance of Rajasthan, with over 20 years of experience performing across the globe.",
+    state: "rajasthan",
+    artForm: "Kalbelia Dance",
+    specialty: "Traditional Folk Dance",
+    experience: "20+ Years",
+    price: 5000,
+    story: "Born in the heart of the Thar Desert, Rajesh learned the art of Kalbelia from his ancestors. This dance, which mimics the movements of a serpent, is a vibrant celebration of our nomadic heritage.",
+    gallery: [
+      { url: "https://images.unsplash.com/photo-1590050854228-3e4407338787?auto=format&fit=crop&q=80&w=800", type: "image", title: "Desert Performance" },
+      { url: "https://images.unsplash.com/photo-1599727732104-58564020a16d?auto=format&fit=crop&q=80&w=800", type: "image", title: "Cultural Event" },
+      { url: "https://images.unsplash.com/photo-1605649487212-47bdab064df7?auto=format&fit=crop&q=80&w=800", type: "image", title: "Traditional Attire" }
+    ],
+    pastPerformances: [
+      { event: "Rajasthan International Folk Festival", venue: "Mehrangarh Fort, Jodhpur", date: "2024-10-15" },
+      { event: "Surajkund International Crafts Mela", venue: "Faridabad", date: "2025-02-05" }
+    ],
+    pricing: {
+      packages: [
+        { name: "Basic Show", duration: "1 Hour", description: "Standard Kalbelia performance with 4 dancers and 2 musicians.", price: 5000 },
+        { name: "Full Cultural Night", duration: "3 Hours", description: "Complete Rajasthani folk experience with multiple dance forms and interactive sessions.", price: 12000 }
+      ],
+      addOns: [
+        { name: "Mehendi Session", price: 1500 },
+        { name: "Traditional Welcome", price: 1000 }
+      ]
+    },
+    availability: {
+      bookedDates: ["2026-03-15", "2026-03-20"],
+      blockedDates: ["2026-03-25"]
+    },
+    isApproved: true
+  }
+];
 const seedData = async () => {
   try {
     // Better seeding logic: Upsert states to avoid duplicates and ensure all are added
@@ -68,7 +109,7 @@ const seedData = async () => {
       await State.findOneAndUpdate(
         { id: stateData.id },
         stateData,
-        { upsert: true, new: true }
+        { upsert: true, returnDocument: 'after' }
       );
     }
     console.log(`${states.length} States updated/seeded successfully`);
@@ -77,6 +118,22 @@ const seedData = async () => {
     if (artFormCount === 0) {
       await ArtForm.insertMany(artForms);
       console.log('ArtForms seeded successfully');
+    }
+
+    // Seed Sample Artist
+    for (const artistData of seedArtists) {
+      const existingArtist = await User.findOne({ email: artistData.email });
+      if (existingArtist) {
+        // Update existing artist (excluding password to avoid re-hashing if not changed)
+        const { password, ...updateData } = artistData;
+        Object.assign(existingArtist, updateData);
+        await existingArtist.save();
+        console.log(`Artist ${artistData.name} updated successfully`);
+      } else {
+        // Create new artist
+        await User.create(artistData);
+        console.log(`Artist ${artistData.name} created successfully`);
+      }
     }
   } catch (error) {
     console.error('Error seeding data:', error);

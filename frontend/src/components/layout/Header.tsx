@@ -18,6 +18,22 @@ const Header = () => {
   const location = useLocation();
   const { isAuthenticated, logout, user } = useAuth();
 
+  const getNavLinks = () => {
+    if (user?.role === 'artist') {
+      return [
+        { href: "/artist/dashboard", label: "Dashboard" }
+      ];
+    }
+    return [
+      { href: "/", label: "Home" },
+      { href: "/about", label: "About" },
+      { href: "/artists", label: "Artists" },
+      { href: "/states", label: "Explore States" },
+    ];
+  };
+
+  const activeLinks = getNavLinks();
+
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center justify-between md:h-20">
@@ -33,7 +49,7 @@ const Header = () => {
 
         {/* Desktop Navigation */}
         <nav className="hidden items-center gap-1 md:flex">
-          {navLinks.map((link) => (
+          {activeLinks.map((link) => (
             <Link
               key={link.href}
               to={link.href}
@@ -93,7 +109,7 @@ const Header = () => {
       {isMobileMenuOpen && (
         <div className="border-t border-border bg-background md:hidden">
           <nav className="container flex flex-col py-4">
-            {navLinks.map((link) => (
+            {activeLinks.map((link) => (
               <Link
                 key={link.href}
                 to={link.href}

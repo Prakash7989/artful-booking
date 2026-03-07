@@ -6,10 +6,10 @@ const User = require('../models/User');
 // @access  Private (Customer)
 const createBooking = async (req, res) => {
   try {
-    const { artistId, date, message } = req.body;
+    const { artistId, date, message, pricingPackage, location } = req.body;
 
     const artist = await User.findById(artistId);
-    if (!artist || artist.role !== 'artist' || !artist.isApproved) {
+    if (!artist || artist.role !== 'artist' || !artist.available) {
       return res.status(404).json({ message: 'Artist not found or not available' });
     }
 
@@ -28,7 +28,9 @@ const createBooking = async (req, res) => {
       customer: req.user._id,
       artist: artistId,
       date,
-      price: artist.price,
+      price: pricingPackage ? pricingPackage.price : artist.price,
+      pricingPackage,
+      location: location || 'Venue TBD',
       message
     });
 

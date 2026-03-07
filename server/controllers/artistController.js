@@ -73,6 +73,41 @@ const getArtistById = async (req, res) => {
   }
 };
 
+// Helper to calculate profile completeness
+const calculateCompleteness = (artist) => {
+  const fields = [
+    { name: 'bio', label: 'Professional Bio', weight: 20 },
+    { name: 'story', label: 'Story of Your Art', weight: 15 },
+    { name: 'specialty', label: 'Specialty', weight: 10 },
+    { name: 'experience', label: 'Experience', weight: 10 },
+    { name: 'price', label: 'Base Price', weight: 10 },
+    { name: 'gallery', label: 'Gallery Images', weight: 15, isArray: true },
+    { name: 'pricing', label: 'Pricing Packages', weight: 20, isNested: 'packages' }
+  ];
+
+  let score = 0;
+  const missing = [];
+
+  fields.forEach(field => {
+    let hasValue = false;
+    if (field.isArray) {
+      hasValue = artist[field.name] && artist[field.name].length > 0;
+    } else if (field.isNested) {
+      hasValue = artist[field.name] && artist[field.name][field.isNested] && artist[field.name][field.isNested].length > 0;
+    } else {
+      hasValue = !!artist[field.name];
+    }
+
+    if (hasValue) {
+      score += field.weight;
+    } else {
+      missing.push(field.label);
+    }
+  });
+
+  return { score, missing };
+};
+
 // @desc    Get current artist profile
 // @route   GET /api/artists/me
 // @access  Private (Artist)
@@ -83,15 +118,18 @@ const getArtistProfile = async (req, res) => {
       return res.status(404).json({ message: 'Artist profile not found' });
     }
 
-    // Reuse the object enrichment logic if needed, or just return the record
     const artistObj = artist.toObject();
     
-    // Ensure all optional fields have safe defaults for the frontend dashboard
+    // Ensure safe defaults
     if (!artistObj.gallery) artistObj.gallery = [];
     if (!artistObj.pastPerformances) artistObj.pastPerformances = [];
     if (!artistObj.customerReviews) artistObj.customerReviews = [];
     if (!artistObj.pricing) artistObj.pricing = { packages: [], addOns: [] };
     if (!artistObj.availability) artistObj.availability = { bookedDates: [], blockedDates: [] };
+
+    // Calculate completeness
+    const completeness = calculateCompleteness(artistObj);
+    artistObj.completeness = completeness;
 
     res.status(200).json(artistObj);
   } catch (error) {
@@ -114,7 +152,7 @@ const updateArtistProfile = async (req, res) => {
       name, bio, state, specialty, 
       experience, price, story, 
       galleryToDelete, availability,
-      pricing
+      pricing, available
     } = req.body;
 
     // Update basic fields
@@ -125,6 +163,7 @@ const updateArtistProfile = async (req, res) => {
     artist.experience = experience !== undefined ? experience : artist.experience;
     artist.price = price !== undefined ? Number(price) : artist.price;
     artist.story = story !== undefined ? story : artist.story;
+    artist.available = available !== undefined ? available === 'true' || available === true : artist.available;
 
     // Handle Availability & Pricing (passed as JSON strings in multipart/form-data)
     if (availability) artist.availability = JSON.parse(availability);

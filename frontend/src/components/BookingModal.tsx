@@ -17,6 +17,7 @@ import {
     PopoverTrigger,
 } from "@/components/ui/popover";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
@@ -26,13 +27,17 @@ interface BookingModalProps {
     artistId: string;
     artistName: string;
     price: number;
+    initialPackage?: any;
 }
 
-const BookingModal = ({ isOpen, onClose, artistId, artistName, price }: BookingModalProps) => {
+const BookingModal = ({ isOpen, onClose, artistId, artistName, price: basePrice, initialPackage }: BookingModalProps) => {
     const [date, setDate] = useState<Date>();
     const [message, setMessage] = useState("");
+    const [location, setLocation] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isSuccess, setIsSuccess] = useState(false);
+
+    const bookingPrice = initialPackage ? initialPackage.price : basePrice;
 
     const handleBooking = async () => {
         if (!date) {
@@ -57,7 +62,9 @@ const BookingModal = ({ isOpen, onClose, artistId, artistName, price }: BookingM
                 body: JSON.stringify({
                     artistId,
                     date,
-                    message
+                    message,
+                    location,
+                    pricingPackage: initialPackage
                 })
             });
 
@@ -128,6 +135,14 @@ const BookingModal = ({ isOpen, onClose, artistId, artistName, price }: BookingM
                                 </Popover>
                             </div>
                             <div className="grid gap-2">
+                                <label className="text-sm font-medium">Event Location</label>
+                                <Input
+                                    placeholder="Enter venue address or 'Virtual'"
+                                    value={location}
+                                    onChange={(e) => setLocation(e.target.value)}
+                                />
+                            </div>
+                            <div className="grid gap-2">
                                 <label className="text-sm font-medium">Message (Optional)</label>
                                 <Textarea
                                     placeholder="Tell the artist about your event..."
@@ -137,9 +152,17 @@ const BookingModal = ({ isOpen, onClose, artistId, artistName, price }: BookingM
                                 />
                             </div>
                             <div className="rounded-lg bg-muted p-3">
-                                <div className="flex justify-between text-sm">
-                                    <span>Price</span>
-                                    <span className="font-semibold">₹{price.toLocaleString("en-IN")}</span>
+                                <div className="flex flex-col gap-1">
+                                    {initialPackage && (
+                                        <div className="flex justify-between text-xs text-muted-foreground">
+                                            <span>Package</span>
+                                            <span>{initialPackage.name}</span>
+                                        </div>
+                                    )}
+                                    <div className="flex justify-between text-sm">
+                                        <span>Total Price</span>
+                                        <span className="font-semibold">₹{bookingPrice.toLocaleString("en-IN")}</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>

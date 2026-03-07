@@ -4,10 +4,11 @@ import { motion } from "framer-motion";
 import {
   Star, MapPin, Calendar, Clock, Users, Award, Play,
   ChevronLeft, ChevronRight, Heart, Share2, CheckCircle,
-  Phone, Mail, Music, Palette, Loader2
+  Phone, Mail, Music, Palette, Loader2, MessageSquare
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import MainLayout from "@/components/layout/MainLayout";
@@ -21,6 +22,7 @@ const ArtistProfile = () => {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [currentGalleryIndex, setCurrentGalleryIndex] = useState(0);
   const [isWishlisted, setIsWishlisted] = useState(false);
+  const [selectedPackage, setSelectedPackage] = useState<any>(null);
 
   useEffect(() => {
     const fetchArtist = async () => {
@@ -236,7 +238,10 @@ const ArtistProfile = () => {
                   <Button
                     size="lg"
                     className="flex-1 bg-gradient-saffron text-lg hover:opacity-90"
-                    onClick={() => setIsBookingModalOpen(true)}
+                    onClick={() => {
+                      setSelectedPackage(null);
+                      setIsBookingModalOpen(true);
+                    }}
                   >
                     Book Now
                   </Button>
@@ -261,249 +266,318 @@ const ArtistProfile = () => {
         artistId={artist._id}
         artistName={artist.name}
         price={artist.price || 0}
+        initialPackage={selectedPackage}
       />
 
       {/* Details Tabs */}
-      <section className="py-8 md:py-12">
+      <section className="py-8 md:py-12 bg-muted/20">
         <div className="container">
-          <Tabs defaultValue="about" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-4 lg:w-auto lg:inline-grid">
-              <TabsTrigger value="about">About</TabsTrigger>
-              <TabsTrigger value="pricing">Pricing</TabsTrigger>
-              <TabsTrigger value="availability">Availability</TabsTrigger>
-              <TabsTrigger value="reviews">Reviews</TabsTrigger>
-            </TabsList>
+          <Tabs defaultValue="about" className="space-y-8">
+            <div className="flex justify-center">
+              <TabsList className="bg-card border p-1 rounded-full shadow-sm">
+                <TabsTrigger value="about" className="rounded-full px-8">About</TabsTrigger>
+                <TabsTrigger value="pricing" className="rounded-full px-8">Pricing</TabsTrigger>
+                <TabsTrigger value="availability" className="rounded-full px-8">Availability</TabsTrigger>
+                <TabsTrigger value="reviews" className="rounded-full px-8">Reviews</TabsTrigger>
+              </TabsList>
+            </div>
 
             {/* About Tab */}
-            <TabsContent value="about" className="space-y-6">
-              <div className="grid gap-6 lg:grid-cols-2">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>About the Artist</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <p className="text-muted-foreground">{artist.bio || 'No bio available.'}</p>
-                    {artist.story && <p className="text-muted-foreground">{artist.story}</p>}
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Award className="h-5 w-5 text-accent" />
-                      Specialization
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <ul className="space-y-3">
-                      <li className="flex items-center gap-3">
-                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-accent/10">
-                          <CheckCircle className="h-4 w-4 text-accent" />
-                        </div>
-                        <span className="text-foreground">{artist.artForm || artist.specialty}</span>
-                      </li>
-                      {artist?.awards && (Array.isArray(artist.awards) ? artist.awards : [artist.awards]).map((award: any, index: number) => (
-                        <li key={index} className="flex items-center gap-3">
-                          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-accent/10">
-                            <Award className="h-4 w-4 text-accent" />
-                          </div>
-                          <span className="text-foreground">{award}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </CardContent>
-                </Card>
-
-                {(artist?.pastPerformances?.length || 0) > 0 && (
-                  <Card className="lg:col-span-2">
-                    <CardHeader>
-                      <CardTitle>Past Performances</CardTitle>
+            <TabsContent value="about" className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <div className="grid gap-8 lg:grid-cols-3">
+                <div className="lg:col-span-2 space-y-8">
+                  <Card className="border-none shadow-none bg-transparent">
+                    <CardHeader className="px-0">
+                      <CardTitle className="text-2xl font-display">The Artist's Journey</CardTitle>
                     </CardHeader>
-                    <CardContent>
-                      <div className="grid gap-4 sm:grid-cols-3">
+                    <CardContent className="px-0 space-y-6">
+                      <p className="text-lg leading-relaxed text-muted-foreground font-light">
+                        {artist.bio || 'No bio available.'}
+                      </p>
+
+                      {artist.story && (
+                        <div className="relative border-l-4 border-primary/20 pl-6 py-2 italic text-muted-foreground/90">
+                          <p className="text-lg leading-relaxed">
+                            "{artist.story}"
+                          </p>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+
+                  {(artist?.pastPerformances?.length || 0) > 0 && (
+                    <div className="space-y-4">
+                      <h3 className="text-xl font-bold font-display">Notable Performances</h3>
+                      <div className="grid gap-4 sm:grid-cols-2">
                         {artist.pastPerformances.map((perf: any, index: number) => (
-                          <div key={index} className="rounded-lg border border-border bg-muted/30 p-4">
-                            <p className="font-semibold text-foreground">{perf.event}</p>
-                            <p className="text-sm text-muted-foreground">{perf.venue}</p>
-                            <p className="mt-2 text-xs text-primary">{perf.date}</p>
+                          <div key={index} className="rounded-2xl border border-border bg-card p-5 shadow-sm hover:shadow-md transition-all">
+                            <h4 className="font-bold text-lg">{perf.event}</h4>
+                            <div className="flex items-center gap-2 mt-1 text-muted-foreground">
+                              <MapPin className="h-4 w-4" />
+                              <span className="text-sm">{perf.venue}</span>
+                            </div>
+                            <div className="mt-3 inline-flex items-center rounded-full bg-primary/5 px-3 py-1 text-xs font-semibold text-primary">
+                              {perf.date}
+                            </div>
                           </div>
                         ))}
                       </div>
+                    </div>
+                  )}
+                </div>
+
+                <div className="space-y-6">
+                  <Card className="rounded-3xl border-none bg-card shadow-xl shadow-saffron-100/20">
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2 text-xl">
+                        <Award className="h-6 w-6 text-saffron-500" />
+                        Expertise
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-6">
+                      <div className="space-y-3">
+                        <Label className="text-xs uppercase tracking-widest text-muted-foreground">Primary Art Form</Label>
+                        <div className="flex items-center gap-3 p-3 rounded-2xl bg-muted/50 border border-border/50">
+                          <Palette className="h-5 w-5 text-primary" />
+                          <span className="font-bold">{artist.artForm || artist.specialty}</span>
+                        </div>
+                      </div>
+
+                      {artist?.awards && (
+                        <div className="space-y-3">
+                          <Label className="text-xs uppercase tracking-widest text-muted-foreground">Recognition</Label>
+                          <ul className="space-y-3">
+                            {(Array.isArray(artist.awards) ? artist.awards : [artist.awards]).map((award: any, index: number) => (
+                              <li key={index} className="flex items-start gap-3">
+                                <div className="mt-1 flex h-2 w-2 rounded-full bg-saffron-500 shrink-0" />
+                                <span className="text-sm font-medium">{award}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
                     </CardContent>
                   </Card>
-                )}
+
+                  <Card className="rounded-3xl border-none bg-primary text-primary-foreground shadow-xl shadow-primary/20">
+                    <CardContent className="pt-6 space-y-4">
+                      <h3 className="text-xl font-bold">Interested in Booking?</h3>
+                      <p className="text-primary-foreground/80 text-sm">
+                        Contact {artist.name} to customize a performance for your next event.
+                      </p>
+                      <Button variant="secondary" className="w-full rounded-full" onClick={() => {
+                        setSelectedPackage(null);
+                        setIsBookingModalOpen(true);
+                      }}>
+                        Message Artist
+                      </Button>
+                    </CardContent>
+                  </Card>
+                </div>
               </div>
             </TabsContent>
 
             {/* Pricing Tab */}
-            <TabsContent value="pricing" className="space-y-6">
-              <div className="grid gap-6 lg:grid-cols-2">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Performance Packages</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    {artist?.pricing?.packages?.length ? (
-                      artist.pricing.packages.map((pkg: any, index: number) => (
-                        <div
-                          key={index}
-                          className="rounded-lg border border-border p-4 transition-all hover:border-primary/30 hover:bg-primary/5"
-                        >
-                          <div className="mb-2 flex items-center justify-between">
-                            <h4 className="font-semibold text-foreground">{pkg.name}</h4>
-                            <Badge variant="outline">{pkg.duration}</Badge>
-                          </div>
-                          <p className="mb-3 text-sm text-muted-foreground">{pkg.description}</p>
-                          <p className="text-xl font-bold text-primary">
-                            ₹{pkg.price?.toLocaleString("en-IN") || 0}
-                          </p>
-                        </div>
-                      ))
-                    ) : (
-                      <p className="text-muted-foreground">Standard pricing applies based on the quoted rate.</p>
-                    )}
-                  </CardContent>
-                </Card>
+            <TabsContent value="pricing" className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <div className="text-center max-w-2xl mx-auto space-y-2">
+                <h2 className="text-3xl font-bold font-display">Performance Packages</h2>
+                <p className="text-muted-foreground">Choose the perfect package for your occasion</p>
+              </div>
 
-                {artist?.pricing?.addOns?.length > 0 && (
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Add-ons</CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-3">
-                      {artist.pricing.addOns.map((addon: any, index: number) => (
-                        <div
-                          key={index}
-                          className="flex items-center justify-between rounded-lg border border-border p-4"
-                        >
-                          <span className="text-foreground">{addon.name}</span>
-                          <span className="font-semibold text-primary">
-                            +₹{addon.price?.toLocaleString("en-IN") || 0}
-                          </span>
+              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                {artist?.pricing?.packages?.length ? (
+                  artist.pricing.packages.map((pkg: any, index: number) => (
+                    <Card key={index} className="relative overflow-hidden border-none shadow-lg hover:shadow-2xl transition-all hover:-translate-y-1 rounded-3xl">
+                      {index === 1 && (
+                        <div className="absolute top-0 right-0 bg-saffron-500 text-white px-4 py-1.5 text-xs font-bold rounded-bl-2xl">
+                          MOST POPULAR
                         </div>
-                      ))}
-                    </CardContent>
-                  </Card>
+                      )}
+                      <CardHeader className="pb-4">
+                        <CardTitle className="text-xl text-primary">{pkg.name}</CardTitle>
+                        <div className="flex items-center gap-1.5 text-muted-foreground text-sm">
+                          <Clock className="h-4 w-4" />
+                          {pkg.duration}
+                        </div>
+                      </CardHeader>
+                      <CardContent className="space-y-6">
+                        <p className="text-sm text-muted-foreground min-h-[60px]">
+                          {pkg.description}
+                        </p>
+                        <div className="pt-4 border-t border-border flex items-baseline gap-1">
+                          <span className="text-3xl font-extrabold">₹{pkg.price?.toLocaleString("en-IN")}</span>
+                          <span className="text-muted-foreground text-xs">fixed rate</span>
+                        </div>
+                        <Button className="w-full rounded-full bg-primary hover:bg-primary/90" onClick={() => {
+                          setSelectedPackage(pkg);
+                          setIsBookingModalOpen(true);
+                        }}>
+                          Book This Package
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  ))
+                ) : (
+                  <div className="col-span-full py-12 text-center text-muted-foreground bg-card border rounded-3xl">
+                    <p>Standard pricing applies based on the quoted rate of ₹{(artist.price || 0).toLocaleString("en-IN")}.</p>
+                    <Button variant="outline" className="mt-4 rounded-full" onClick={() => setIsBookingModalOpen(true)}>Inquire for Quote</Button>
+                  </div>
                 )}
               </div>
+
+              {artist?.pricing?.addOns?.length > 0 && (
+                <div className="mt-12 space-y-6">
+                  <h3 className="text-2xl font-bold font-display text-center">Enhancement Options</h3>
+                  <div className="grid gap-4 max-w-3xl mx-auto">
+                    {artist.pricing.addOns.map((addon: any, index: number) => (
+                      <div key={index} className="flex items-center justify-between p-4 rounded-2xl border bg-card/50 hover:bg-card transition-colors">
+                        <div className="flex items-center gap-3">
+                          <div className="h-2 w-2 rounded-full bg-primary" />
+                          <span className="font-semibold text-foreground">{addon.name}</span>
+                        </div>
+                        <span className="font-bold text-primary">
+                          +₹{addon.price?.toLocaleString("en-IN")}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </TabsContent>
 
             {/* Availability Tab */}
-            <TabsContent value="availability">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Availability Calendar</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="mb-4 flex flex-wrap gap-4">
-                    <div className="flex items-center gap-2">
-                      <div className="h-4 w-4 rounded bg-green-500"></div>
-                      <span className="text-sm text-muted-foreground">Available</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="h-4 w-4 rounded bg-secondary"></div>
-                      <span className="text-sm text-muted-foreground">Booked</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="h-4 w-4 rounded bg-muted"></div>
-                      <span className="text-sm text-muted-foreground">Blocked</span>
-                    </div>
-                  </div>
-
-                  {/* Simple Calendar Grid */}
-                  <div className="rounded-lg border border-border p-4">
-                    <div className="mb-4 flex items-center justify-between">
-                      <h4 className="font-semibold">March 2026</h4>
-                      <div className="flex gap-2">
-                        <Button variant="outline" size="sm">
-                          <ChevronLeft className="h-4 w-4" />
-                        </Button>
-                        <Button variant="outline" size="sm">
-                          <ChevronRight className="h-4 w-4" />
-                        </Button>
+            <TabsContent value="availability" className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <div className="max-w-4xl mx-auto">
+                <Card className="rounded-3xl border-none shadow-xl">
+                  <CardHeader className="text-center">
+                    <CardTitle className="text-2xl font-display">Booking Schedule</CardTitle>
+                    <p className="text-muted-foreground">Dates highlighted in red are already confirmed</p>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="mb-8 flex justify-center flex-wrap gap-6">
+                      <div className="flex items-center gap-2">
+                        <div className="h-3 w-3 rounded-full bg-green-500"></div>
+                        <span className="text-sm font-medium">Available</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="h-3 w-3 rounded-full bg-secondary"></div>
+                        <span className="text-sm font-medium">Booked</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="h-3 w-3 rounded-full bg-muted"></div>
+                        <span className="text-sm font-medium">Blocked</span>
                       </div>
                     </div>
-                    <div className="grid grid-cols-7 gap-1 text-center">
-                      {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
-                        <div key={day} className="py-2 text-xs font-medium text-muted-foreground">
-                          {day}
+
+                    <div className="rounded-2xl border border-border p-6 shadow-inner bg-muted/5">
+                      <div className="mb-6 flex items-center justify-between">
+                        <h4 className="text-lg font-bold">March 2026</h4>
+                        <div className="flex gap-2">
+                          <Button variant="outline" size="icon" className="rounded-full h-8 w-8">
+                            <ChevronLeft className="h-4 w-4" />
+                          </Button>
+                          <Button variant="outline" size="icon" className="rounded-full h-8 w-8">
+                            <ChevronRight className="h-4 w-4" />
+                          </Button>
                         </div>
-                      ))}
-                      {/* Sample calendar days */}
-                      {Array.from({ length: 31 }, (_, i) => {
-                        const day = i + 1;
-                        const dateStr = `2026-03-${day.toString().padStart(2, "0")}`;
-                        const isBlocked = artist?.availability?.blockedDates?.includes(dateStr);
-                        const isBooked = artist?.availability?.bookedDates?.includes(dateStr);
-
-                        return (
-                          <button
-                            key={day}
-                            className={`rounded-lg py-2 text-sm transition-all ${isBooked
-                              ? "bg-secondary text-secondary-foreground"
-                              : isBlocked
-                                ? "bg-muted text-muted-foreground cursor-not-allowed"
-                                : "bg-green-500/20 text-green-700 hover:bg-green-500/40"
-                              }`}
-                            disabled={isBlocked || isBooked}
-                          >
+                      </div>
+                      <div className="grid grid-cols-7 gap-2 text-center">
+                        {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
+                          <div key={day} className="py-2 text-[10px] uppercase tracking-widest font-bold text-muted-foreground">
                             {day}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
+                          </div>
+                        ))}
+                        {Array.from({ length: 31 }, (_, i) => {
+                          const day = i + 1;
+                          const dateStr = `2026-03-${day.toString().padStart(2, "0")}`;
+                          const isBlocked = artist?.availability?.blockedDates?.includes(dateStr);
+                          const isBooked = artist?.availability?.bookedDates?.includes(dateStr);
 
-                  <div className="mt-6 text-center">
-                    <Button size="lg" className="bg-gradient-saffron" onClick={() => setIsBookingModalOpen(true)}>
-                      <Calendar className="mr-2 h-5 w-5" />
-                      Check Availability & Book
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
+                          return (
+                            <button
+                              key={day}
+                              className={`aspect-square rounded-xl flex items-center justify-center text-sm font-bold transition-all ${isBooked
+                                ? "bg-secondary text-secondary-foreground shadow-inner"
+                                : isBlocked
+                                  ? "bg-muted text-muted-foreground cursor-not-allowed opacity-50"
+                                  : "bg-green-500/10 text-green-700 hover:bg-green-500/30 ring-1 ring-inset ring-green-500/20"
+                                }`}
+                              disabled={isBlocked || isBooked}
+                            >
+                              {day}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    <div className="mt-10 text-center">
+                      <Button size="lg" className="bg-gradient-saffron px-10 rounded-full shadow-lg shadow-saffron-200" onClick={() => setIsBookingModalOpen(true)}>
+                        <Calendar className="mr-2 h-5 w-5" />
+                        Check Availability
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
             </TabsContent>
 
             {/* Reviews Tab */}
-            <TabsContent value="reviews">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Customer Reviews</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {artist?.customerReviews?.length > 0 ? (
-                    artist.customerReviews.map((review: any) => (
-                      <div key={review.id || review._id} className="rounded-lg border border-border p-4">
-                        <div className="mb-2 flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 font-semibold text-primary">
-                              {review.user?.charAt(0) || 'U'}
-                            </div>
-                            <div>
-                              <p className="font-semibold text-foreground">{review.user || 'User'}</p>
-                              <p className="text-xs text-muted-foreground">{review.date || 'Recent'}</p>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-1">
-                            {Array.from({ length: 5 }, (_, i) => (
-                              <Star
-                                key={i}
-                                className={`h-4 w-4 ${i < (review.rating || 0) ? "fill-accent text-accent" : "text-muted"
-                                  }`}
-                              />
-                            ))}
-                          </div>
-                        </div>
-                        <p className="text-muted-foreground">{review.comment || 'No comment provided.'}</p>
-                      </div>
-                    ))
-                  ) : (
-                    <div className="py-8 text-center text-muted-foreground">
-                      No reviews yet for this artist.
+            <TabsContent value="reviews" className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <div className="max-w-4xl mx-auto">
+                <div className="grid gap-8 lg:grid-cols-3">
+                  <Card className="lg:col-span-1 rounded-3xl border-none bg-card shadow-lg p-6 flex flex-col items-center justify-center text-center">
+                    <span className="text-5xl font-extrabold text-foreground">{artist.rating || 4.5}</span>
+                    <div className="flex my-3">
+                      {Array.from({ length: 5 }, (_, i) => (
+                        <Star key={i} className={`h-5 w-5 ${i < Math.floor(artist.rating || 4) ? "fill-saffron-500 text-saffron-500" : "text-muted"}`} />
+                      ))}
                     </div>
-                  )}
-                </CardContent>
-              </Card>
+                    <p className="text-muted-foreground text-sm">Average rating from {artist.reviewsCount || 0} authentic reviews</p>
+                  </Card>
+
+                  <Card className="lg:col-span-2 rounded-3xl border-none bg-transparent shadow-none">
+                    <CardHeader className="px-0 pt-0">
+                      <CardTitle className="text-2xl font-display">Voice of the Audience</CardTitle>
+                    </CardHeader>
+                    <CardContent className="px-0 space-y-4">
+                      {artist?.customerReviews?.length > 0 ? (
+                        artist.customerReviews.map((review: any) => (
+                          <div key={review.id || review._id} className="rounded-2xl border bg-card p-6 shadow-sm hover:shadow-md transition-all">
+                            <div className="mb-4 flex items-center justify-between">
+                              <div className="flex items-center gap-3">
+                                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/5 border border-primary/10 font-bold text-primary text-lg">
+                                  {review.user?.charAt(0) || 'U'}
+                                </div>
+                                <div>
+                                  <p className="font-bold text-foreground text-lg">{review.user || 'User'}</p>
+                                  <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">{review.date || 'March 2026'}</p>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-0.5">
+                                {Array.from({ length: 5 }, (_, i) => (
+                                  <Star
+                                    key={i}
+                                    className={`h-4 w-4 ${i < (review.rating || 0) ? "fill-saffron-500 text-saffron-500" : "text-muted"}`}
+                                  />
+                                ))}
+                              </div>
+                            </div>
+                            <p className="text-muted-foreground leading-relaxed italic">
+                              "{review.comment || 'An incredible experience that exceeded all expectations.'}"
+                            </p>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="py-20 text-center text-muted-foreground bg-card rounded-3xl border border-dashed flex flex-col items-center">
+                          <MessageSquare className="h-12 w-12 opacity-10 mb-4" />
+                          <p>No reviews yet for this artist. Be the first to host them!</p>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                </div>
+              </div>
             </TabsContent>
           </Tabs>
         </div>
