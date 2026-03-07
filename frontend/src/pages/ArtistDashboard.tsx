@@ -233,10 +233,12 @@ const ArtistDashboard = () => {
 
     const addPackage = () => {
         setPackages([...packages, { name: "", duration: "", description: "", price: 0 }]);
+        toast.success("New package template added");
     };
 
     const removePackage = (index: number) => {
         setPackages(packages.filter((_, i) => i !== index));
+        toast.info("Package removed from list");
     };
 
     const updatePackage = (index: number, field: string, value: any) => {
@@ -248,8 +250,10 @@ const ArtistDashboard = () => {
     const toggleDeleteImage = (id: string) => {
         if (galleryToDelete.includes(id)) {
             setGalleryToDelete(galleryToDelete.filter(i => i !== id));
+            toast.info("Image marked for preservation");
         } else {
             setGalleryToDelete([...galleryToDelete, id]);
+            toast.warning("Image marked for deletion. Save profile to confirm.");
         }
     };
 
