@@ -51,15 +51,16 @@ const Footer = () => {
                 </Link>
               </li>
               <li>
-                <Link to="/art-forms" className="text-sm text-secondary-foreground/80 transition-colors hover:text-primary">
+                <Link to="/artists" className="text-sm text-secondary-foreground/80 transition-colors hover:text-primary">
                   Art Forms
                 </Link>
               </li>
               <li>
-                <Link to="/featured" className="text-sm text-secondary-foreground/80 transition-colors hover:text-primary">
+                <Link to="/artists" className="text-sm text-secondary-foreground/80 transition-colors hover:text-primary">
                   Featured Artists
                 </Link>
               </li>
+
             </ul>
           </div>
 
@@ -68,25 +69,26 @@ const Footer = () => {
             <h4 className="mb-4 font-display text-lg font-semibold">For Artists</h4>
             <ul className="space-y-2">
               <li>
-                <Link to="/join" className="text-sm text-secondary-foreground/80 transition-colors hover:text-primary">
+                <Link to="/register?role=artist" className="text-sm text-secondary-foreground/80 transition-colors hover:text-primary">
                   Join as Artist
                 </Link>
               </li>
               <li>
-                <Link to="/artisan/login" className="text-sm text-secondary-foreground/80 transition-colors hover:text-primary">
+                <Link to="/login" className="text-sm text-secondary-foreground/80 transition-colors hover:text-primary">
                   Artist Login
                 </Link>
               </li>
               <li>
-                <Link to="/how-it-works" className="text-sm text-secondary-foreground/80 transition-colors hover:text-primary">
+                <Link to="/about" className="text-sm text-secondary-foreground/80 transition-colors hover:text-primary">
                   How It Works
                 </Link>
               </li>
               <li>
-                <Link to="/faq" className="text-sm text-secondary-foreground/80 transition-colors hover:text-primary">
+                <Link to="/about" className="text-sm text-secondary-foreground/80 transition-colors hover:text-primary">
                   FAQs
                 </Link>
               </li>
+
             </ul>
           </div>
 

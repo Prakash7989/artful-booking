@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useSearchParams } from 'react-router-dom';
+
 import { Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { User } from '../context/AuthContext';
@@ -12,16 +13,20 @@ import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 
 export default function Register() {
+    const [searchParams] = useSearchParams();
+    const initialRole = searchParams.get('role') || 'customer';
+
     const [formData, setFormData] = useState({
         name: '',
         email: '',
         password: '',
-        role: 'customer',
+        role: initialRole,
         bio: '',
         state: '',
         specialty: '',
         awards: '',
     });
+
     const [profileImage, setProfileImage] = useState<File | null>(null);
     const [imagePreview, setImagePreview] = useState<string>('');
     const [showPassword, setShowPassword] = useState(false);

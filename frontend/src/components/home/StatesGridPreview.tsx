@@ -2,9 +2,19 @@ import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useState, useEffect } from "react";
 
-// Mock data for Indian states - will be replaced with DB data
-const states = [
+interface StateStat {
+  id: string;
+  name: string;
+  artistCount: number;
+  artFormCount: number;
+  icon: string;
+}
+
+
+// Fallback mock data for Indian states
+const defaultStates = [
   { id: "rajasthan", name: "Rajasthan", artForms: 12, artists: 45, image: "🏜️" },
   { id: "kerala", name: "Kerala", artForms: 8, artists: 32, image: "🌴" },
   { id: "tamil-nadu", name: "Tamil Nadu", artForms: 15, artists: 58, image: "🛕" },
@@ -14,6 +24,7 @@ const states = [
   { id: "gujarat", name: "Gujarat", artForms: 9, artists: 35, image: "🎪" },
   { id: "odisha", name: "Odisha", artForms: 13, artists: 41, image: "🏺" },
 ];
+
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -31,6 +42,33 @@ const itemVariants = {
 };
 
 const StatesGridPreview = () => {
+  const [states, setStates] = useState<any[]>(defaultStates);
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const response = await fetch('/api/stats');
+        const result = await response.json();
+        if (result.success && result.data.stateStats && result.data.stateStats.length > 0) {
+          // Use the fetched stats, but limit to some prominent ones or a fixed set for the preview
+          const fetchedStates = result.data.stateStats.map((s: StateStat) => ({
+            id: s.id,
+            name: s.name,
+            artForms: s.artFormCount,
+            artists: s.artistCount,
+            image: s.icon
+          }));
+
+          // If we have enough states, use them. Otherwise, mix or just show the top 8.
+          setStates(fetchedStates.slice(0, 8));
+        }
+      } catch (error) {
+        console.error('Error fetching state stats:', error);
+      }
+    };
+    fetchStats();
+  }, []);
+
   return (
     <section className="py-16 md:py-24">
       <div className="container">
@@ -60,7 +98,7 @@ const StatesGridPreview = () => {
             transition={{ delay: 0.2 }}
             className="mx-auto max-w-2xl text-muted-foreground"
           >
-            India's rich cultural tapestry spans 28 states, each with unique folk traditions, 
+            India's rich cultural tapestry spans 28 states, each with unique folk traditions,
             classical art forms, and talented performers waiting to bring magic to your events.
           </motion.p>
         </div>
@@ -81,9 +119,18 @@ const StatesGridPreview = () => {
               >
                 {/* Decorative background */}
                 <div className="absolute -right-8 -top-8 text-8xl opacity-10 transition-transform group-hover:scale-110 group-hover:opacity-20">
-                  {state.image}
+                  {state.image && (state.image.startsWith('/') || state.image.startsWith('http')) ? (
+                    state.image === '/placeholder.svg' ? (
+                      "🏛️"
+                    ) : (
+                      <img src={state.image} alt={state.name} className="h-20 w-20 object-contain" />
+                    )
+                  ) : (
+                    state.image || "🏛️"
+                  )}
                 </div>
-                
+
+
                 <div className="relative">
                   <h3 className="mb-2 font-display text-xl font-semibold text-foreground group-hover:text-primary">
                     {state.name}
@@ -93,6 +140,7 @@ const StatesGridPreview = () => {
                     <span>•</span>
                     <span>{state.artists} Artists</span>
                   </div>
+
                   <span className="inline-flex items-center text-sm font-medium text-primary opacity-0 transition-opacity group-hover:opacity-100">
                     Explore
                     <ArrowRight className="ml-1 h-4 w-4" />

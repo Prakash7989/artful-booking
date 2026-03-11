@@ -3,8 +3,27 @@ import { Search, ArrowRight, Star, Shield, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Link } from "react-router-dom";
+import { useState, useEffect } from "react";
+
 
 const HeroSection = () => {
+  const [artistCount, setArtistCount] = useState<number | null>(null);
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const response = await fetch('/api/stats');
+        const result = await response.json();
+        if (result.success) {
+          setArtistCount(result.data.totalArtists);
+        }
+      } catch (error) {
+        console.error('Error fetching stats:', error);
+      }
+    };
+    fetchStats();
+  }, []);
+
   return (
     <section className="relative overflow-hidden bg-gradient-to-br from-cream via-background to-muted py-16 md:py-24 lg:py-32">
       {/* Decorative Elements */}
@@ -45,7 +64,7 @@ const HeroSection = () => {
             transition={{ duration: 0.6, delay: 0.2 }}
             className="mx-auto mb-8 max-w-2xl text-lg text-muted-foreground md:text-xl"
           >
-            Connect with verified traditional artists for weddings, festivals, corporate events, 
+            Connect with verified traditional artists for weddings, festivals, corporate events,
             and cultural celebrations. Experience the richness of India's artistic traditions.
           </motion.p>
 
@@ -71,10 +90,11 @@ const HeroSection = () => {
               </Button>
             </div>
             <p className="mt-3 text-sm text-muted-foreground">
-              Popular: <Link to="/states/rajasthan" className="text-primary hover:underline">Rajasthani Folk</Link>,{" "}
-              <Link to="/art-forms/kathak" className="text-primary hover:underline">Kathak</Link>,{" "}
-              <Link to="/art-forms/bharatanatyam" className="text-primary hover:underline">Bharatanatyam</Link>
+              Popular: <Link to="/states/rajasthan" className="text-primary hover:underline">Rajasthan</Link>,{" "}
+              <Link to="/artists?artForm=Kathak" className="text-primary hover:underline">Kathak</Link>,{" "}
+              <Link to="/artists?artForm=Bharatanatyam" className="text-primary hover:underline">Bharatanatyam</Link>
             </p>
+
           </motion.div>
 
           {/* Trust Indicators */}
@@ -88,8 +108,9 @@ const HeroSection = () => {
               <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10">
                 <Star className="h-4 w-4 text-primary" />
               </div>
-              <span>500+ Verified Artists</span>
+              <span>{artistCount !== null ? `${artistCount}+` : '500+'} Verified Artists</span>
             </div>
+
             <div className="flex items-center gap-2">
               <div className="flex h-8 w-8 items-center justify-center rounded-full bg-accent/10">
                 <Shield className="h-4 w-4 text-accent-foreground" />

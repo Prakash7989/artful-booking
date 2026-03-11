@@ -1,9 +1,19 @@
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
+import { useState, useEffect } from "react";
 
-// Mock data for popular art forms
-const artForms = [
+interface ArtFormStat {
+  id: string;
+  name: string;
+  state: string;
+  artistCount: number;
+  icon: string;
+}
+
+
+// Fallback mock data for popular art forms
+const defaultArtForms = [
   { id: "bharatanatyam", name: "Bharatanatyam", state: "Tamil Nadu", artists: 58, icon: "💃" },
   { id: "kathak", name: "Kathak", state: "Uttar Pradesh", artists: 42, icon: "👠" },
   { id: "kathakali", name: "Kathakali", state: "Kerala", artists: 35, icon: "🎭" },
@@ -12,7 +22,33 @@ const artForms = [
   { id: "lavani", name: "Lavani", state: "Maharashtra", artists: 32, icon: "🪘" },
 ];
 
+
 const ArtFormsSection = () => {
+  const [artForms, setArtForms] = useState<any[]>(defaultArtForms);
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const response = await fetch('/api/stats');
+        const result = await response.json();
+        if (result.success && result.data.artFormStats && result.data.artFormStats.length > 0) {
+          const fetchedArtForms = result.data.artFormStats.map((af: ArtFormStat) => ({
+            id: af.id,
+            name: af.name,
+            state: af.state,
+            artists: af.artistCount,
+            icon: af.icon || "🎭"
+          }));
+
+          setArtForms(fetchedArtForms.slice(0, 6));
+        }
+      } catch (error) {
+        console.error('Error fetching art form stats:', error);
+      }
+    };
+    fetchStats();
+  }, []);
+
   return (
     <section className="py-16 md:py-24">
       <div className="container">
@@ -42,7 +78,7 @@ const ArtFormsSection = () => {
             transition={{ delay: 0.2 }}
             className="mx-auto max-w-2xl text-muted-foreground"
           >
-            From classical dance forms passed down through generations to vibrant folk traditions, 
+            From classical dance forms passed down through generations to vibrant folk traditions,
             explore the diverse artistic expressions of India.
           </motion.p>
         </div>
@@ -58,19 +94,30 @@ const ArtFormsSection = () => {
               transition={{ delay: index * 0.1 }}
             >
               <Link
-                to={`/art-forms/${artForm.id}`}
+                to={`/artists?artForm=${artForm.name}`}
+
                 className="group flex items-center gap-4 rounded-xl border border-border bg-card p-5 transition-all hover:border-primary/30 hover:shadow-warm"
               >
-                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-primary/10 to-accent/10 text-3xl transition-transform group-hover:scale-110">
-                  {artForm.icon}
+                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-primary/10 to-accent/10 text-3xl transition-transform group-hover:scale-110 overflow-hidden">
+                  {artForm.icon && (artForm.icon.startsWith('/') || artForm.icon.startsWith('http')) ? (
+                    artForm.icon === '/placeholder.svg' ? (
+                      <span className="text-3xl">🎭</span>
+                    ) : (
+                      <img src={artForm.icon} alt={artForm.name} className="h-full w-full object-cover" />
+                    )
+                  ) : (
+                    <span>{artForm.icon || "🎭"}</span>
+                  )}
                 </div>
+
                 <div className="flex-1">
                   <h3 className="font-display text-lg font-semibold text-foreground group-hover:text-primary">
                     {artForm.name}
                   </h3>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-sm text-muted-foreground truncate" title={`${artForm.state} • ${artForm.artists} Artists`}>
                     {artForm.state} • {artForm.artists} Artists
                   </p>
+
                 </div>
                 <ArrowRight className="h-5 w-5 text-muted-foreground opacity-0 transition-all group-hover:translate-x-1 group-hover:text-primary group-hover:opacity-100" />
               </Link>

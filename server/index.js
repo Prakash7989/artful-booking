@@ -22,6 +22,8 @@ app.use('/api/admin', require('./routes/adminRoutes'));
 app.use('/api/states', require('./routes/stateRoutes'));
 app.use('/api/artists', require('./routes/artistRoutes'));
 app.use('/api/bookings', require('./routes/bookingRoutes'));
+app.use('/api/stats', require('./routes/statsRoutes'));
+
 
 // Error handler middleware
 app.use((err, req, res, next) => {
