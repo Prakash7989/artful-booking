@@ -25,7 +25,7 @@ app.use('/api/bookings', require('./routes/bookingRoutes'));
 app.use('/api/stats', require('./routes/statsRoutes'));
 
 
-// Error handler middleware
+// Basic error handler
 app.use((err, req, res, next) => {
   const statusCode = res.statusCode === 200 ? 500 : res.statusCode;
   res.status(statusCode);
@@ -35,6 +35,9 @@ app.use((err, req, res, next) => {
   });
 });
 
-const PORT = process.env.PORT || 5000;
+if (process.env.NODE_ENV !== 'production') {
+  const PORT = process.env.PORT || 5000;
+  app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+}
 
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+module.exports = app;
