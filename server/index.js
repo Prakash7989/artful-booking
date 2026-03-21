@@ -24,6 +24,11 @@ app.use('/api/artists', require('./routes/artistRoutes'));
 app.use('/api/bookings', require('./routes/bookingRoutes'));
 app.use('/api/stats', require('./routes/statsRoutes'));
 
+// Health check route for Vercel deployment
+app.get('/', (req, res) => {
+  res.status(200).json({ message: "Backend is running successfully on Vercel!" });
+});
+
 
 // Basic error handler
 app.use((err, req, res, next) => {
