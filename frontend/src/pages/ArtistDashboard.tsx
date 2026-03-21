@@ -60,7 +60,7 @@ const ArtistDashboard = () => {
     const fetchProfile = async () => {
         try {
             const token = localStorage.getItem('token');
-            const response = await fetch('/api/artists/me', {
+            const response = await fetch(`${import.meta.env.VITE_API_URL}/api/artists/me`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             const data = await response.json();
@@ -84,7 +84,7 @@ const ArtistDashboard = () => {
     const fetchBookings = async () => {
         try {
             const token = localStorage.getItem('token');
-            const response = await fetch('/api/bookings/artist', {
+            const response = await fetch(`${import.meta.env.VITE_API_URL}/api/bookings/artist`, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
@@ -99,7 +99,7 @@ const ArtistDashboard = () => {
     const updateStatus = async (bookingId: string, status: string) => {
         try {
             const token = localStorage.getItem('token');
-            const response = await fetch(`/api/bookings/${bookingId}`, {
+            const response = await fetch(`${import.meta.env.VITE_API_URL}/api/bookings/${bookingId}`, {
                 method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json',
@@ -144,7 +144,7 @@ const ArtistDashboard = () => {
                 });
             }
 
-            const response = await fetch('/api/artists/profile', {
+            const response = await fetch(`${import.meta.env.VITE_API_URL}/api/artists/profile`, {
                 method: 'PUT',
                 headers: { 'Authorization': `Bearer ${token}` },
                 body: formData
@@ -169,7 +169,7 @@ const ArtistDashboard = () => {
         setIsStatusLoading(true);
         try {
             const token = localStorage.getItem('token');
-            const response = await fetch('/api/artists/profile', {
+            const response = await fetch(`${import.meta.env.VITE_API_URL}/api/artists/profile`, {
                 method: 'PUT',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -201,7 +201,7 @@ const ArtistDashboard = () => {
             // Actually let's check artistController's updateArtistProfile again
             // It doesn't seem to explicitly handle 'available'. I might need to add it.
 
-            const response = await fetch('/api/artists/profile', {
+            const response = await fetch(`${import.meta.env.VITE_API_URL}/api/artists/profile`, {
                 method: 'PUT',
                 headers: { 'Authorization': `Bearer ${token}` },
                 body: JSON.stringify({ available: !isAvailable }),
@@ -214,7 +214,7 @@ const ArtistDashboard = () => {
             // Temporary workaround using existing formData structure
             const fd = new FormData();
             fd.append('available', String(!isAvailable));
-            const resp = await fetch('/api/artists/profile', {
+            const resp = await fetch(`${import.meta.env.VITE_API_URL}/api/artists/profile`, {
                 method: 'PUT',
                 headers: { 'Authorization': `Bearer ${token}` },
                 body: fd

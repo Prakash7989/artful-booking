@@ -53,7 +53,7 @@ const BookingModal = ({ isOpen, onClose, artistId, artistName, price: basePrice,
                 return;
             }
 
-            const response = await fetch('/api/bookings', {
+            const response = await fetch(`${import.meta.env.VITE_API_URL}/api/bookings`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

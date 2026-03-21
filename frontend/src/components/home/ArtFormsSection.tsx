@@ -29,7 +29,7 @@ const ArtFormsSection = () => {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const response = await fetch('/api/stats');
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/stats`);
         const result = await response.json();
         if (result.success && result.data.artFormStats && result.data.artFormStats.length > 0) {
           const fetchedArtForms = result.data.artFormStats.map((af: ArtFormStat) => ({

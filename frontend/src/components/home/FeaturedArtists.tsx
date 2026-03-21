@@ -19,7 +19,7 @@ const FeaturedArtists = () => {
   useEffect(() => {
     const fetchArtists = async () => {
       try {
-        const response = await fetch('/api/artists?limit=10');
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/artists?limit=10`);
         const data = await response.json();
         setArtists(data);
       } catch (error) {

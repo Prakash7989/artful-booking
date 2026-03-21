@@ -32,7 +32,7 @@ const Artists = () => {
         if (selectedState !== "All States") queryParams.set("state", selectedState);
         queryParams.set("sort", sortBy);
 
-        const response = await fetch(`/api/artists?${queryParams.toString()}`);
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/artists?${queryParams.toString()}`);
         const data = await response.json();
         setArtists(data);
       } catch (error) {

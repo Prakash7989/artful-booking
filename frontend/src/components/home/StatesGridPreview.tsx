@@ -47,7 +47,7 @@ const StatesGridPreview = () => {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const response = await fetch('/api/stats');
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/stats`);
         const result = await response.json();
         if (result.success && result.data.stateStats && result.data.stateStats.length > 0) {
           // Use the fetched stats, but limit to some prominent ones or a fixed set for the preview

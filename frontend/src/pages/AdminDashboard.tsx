@@ -74,7 +74,7 @@ export default function AdminDashboard() {
     const fetchArtists = useCallback(async () => {
         setIsLoadingArtists(true);
         try {
-            const res = await fetch('/api/admin/artists', { headers: authHeaders });
+            const res = await fetch(`${import.meta.env.VITE_API_URL}/api/admin/artists`, { headers: authHeaders });
             const data = await res.json();
             if (!res.ok) throw new Error(data.message);
             setArtists(data);
@@ -88,7 +88,7 @@ export default function AdminDashboard() {
     const fetchUsers = useCallback(async () => {
         setIsLoadingUsers(true);
         try {
-            const res = await fetch('/api/admin/users', { headers: authHeaders });
+            const res = await fetch(`${import.meta.env.VITE_API_URL}/api/admin/users`, { headers: authHeaders });
             const data = await res.json();
             if (!res.ok) throw new Error(data.message);
             setUsers(data);
@@ -102,7 +102,7 @@ export default function AdminDashboard() {
     const fetchBookings = useCallback(async () => {
         setIsLoadingBookings(true);
         try {
-            const res = await fetch('/api/admin/bookings', { headers: authHeaders });
+            const res = await fetch(`${import.meta.env.VITE_API_URL}/api/admin/bookings`, { headers: authHeaders });
             const data = await res.json();
             if (!res.ok) throw new Error(data.message);
             setBookings(data);
@@ -125,7 +125,7 @@ export default function AdminDashboard() {
     const approveArtist = async (id: string) => {
         setActionLoading(id + '-approve');
         try {
-            const res = await fetch(`/api/admin/artists/${id}/approve`, { method: 'PATCH', headers: authHeaders });
+            const res = await fetch(`${import.meta.env.VITE_API_URL}/api/admin/artists/${id}/approve`, { method: 'PATCH', headers: authHeaders });
             const data = await res.json();
             if (!res.ok) throw new Error(data.message);
             setArtists((prev) => prev.map((a) => (a._id === id ? { ...a, isApproved: true } : a)));
@@ -140,7 +140,7 @@ export default function AdminDashboard() {
     const rejectArtist = async (id: string) => {
         setActionLoading(id + '-reject');
         try {
-            const res = await fetch(`/api/admin/artists/${id}/reject`, { method: 'PATCH', headers: authHeaders });
+            const res = await fetch(`${import.meta.env.VITE_API_URL}/api/admin/artists/${id}/reject`, { method: 'PATCH', headers: authHeaders });
             const data = await res.json();
             if (!res.ok) throw new Error(data.message);
             setArtists((prev) => prev.map((a) => (a._id === id ? { ...a, isApproved: false } : a)));
@@ -156,7 +156,7 @@ export default function AdminDashboard() {
         if (!window.confirm('Are you sure you want to delete this user?')) return;
         setActionLoading(id + '-delete');
         try {
-            const res = await fetch(`/api/admin/users/${id}`, { method: 'DELETE', headers: authHeaders });
+            const res = await fetch(`${import.meta.env.VITE_API_URL}/api/admin/users/${id}`, { method: 'DELETE', headers: authHeaders });
             const data = await res.json();
             if (!res.ok) throw new Error(data.message);
             setUsers((prev) => prev.filter((u) => u._id !== id));

@@ -75,7 +75,7 @@ export default function Profile() {
                 formData.append('profileImage', selectedFile);
             }
 
-            const response = await fetch('/api/auth/profile', {
+            const response = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/profile`, {
                 method: 'PUT',
                 headers: {
                     Authorization: `Bearer ${localStorage.getItem('token')}`,

@@ -34,7 +34,7 @@ const ArtistProfile = () => {
     const fetchArtist = async () => {
       setIsLoading(true);
       try {
-        const response = await fetch(`/api/artists/${id}`);
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/artists/${id}`);
         const data = await response.json();
         setArtist(data);
       } catch (error) {
@@ -594,7 +594,7 @@ const ArtistProfile = () => {
                             setIsSubmittingReview(true);
                             try {
                               const token = localStorage.getItem('token');
-                              const response = await fetch(`/api/artists/${artist._id}/reviews`, {
+                              const response = await fetch(`${import.meta.env.VITE_API_URL}/api/artists/${artist._id}/reviews`, {
                                 method: 'POST',
                                 headers: {
                                   'Content-Type': 'application/json',
@@ -604,7 +604,7 @@ const ArtistProfile = () => {
                               });
                               if (response.ok) {
                                 // Refresh artist data
-                                const res = await fetch(`/api/artists/${artist._id}`);
+                                const res = await fetch(`${import.meta.env.VITE_API_URL}/api/artists/${artist._id}`);
                                 const data = await res.json();
                                 setArtist(data);
                                 setReviewComment("");

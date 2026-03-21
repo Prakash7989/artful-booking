@@ -18,7 +18,7 @@ const States = () => {
     const fetchStates = async () => {
       setIsLoading(true);
       try {
-        const response = await fetch('/api/states');
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/states`);
         const data = await response.json();
         setStates(data);
       } catch (error) {
